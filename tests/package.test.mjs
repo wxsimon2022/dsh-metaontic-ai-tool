@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { gzipSync } from 'node:zlib';
 import { listTarGzEntries, stripReadmeFromTarGz } from '../scripts/strip-package-readme.mjs';
+
+const root = new URL('../', import.meta.url);
+const pkg = JSON.parse(readFileSync(new URL('package.json', root), 'utf8'));
 
 function header(name, size) {
   const block = Buffer.alloc(512);
@@ -50,4 +54,32 @@ test('strips the package README without changing other entries', () => {
     'package/dist/client.js',
   ]);
   assert.equal(stripReadmeFromTarGz(stripped.archive).removed, 0);
+});
+
+test('publishes searchable package metadata without the repository README', () => {
+  assert.equal(pkg.name, 'dsh-metaontic-ai-tool');
+  assert.equal(pkg.license, 'MIT');
+  assert.equal(pkg.homepage, 'https://github.com/wxsimon2022/dsh-metaontic-ai-tool#readme');
+  assert.equal(pkg.bugs.url, 'https://github.com/wxsimon2022/dsh-metaontic-ai-tool/issues');
+
+  for (const keyword of [
+    'deepseek-harness',
+    'dsh-plugin',
+    'metaontic-ai',
+    'new-api',
+    'model-aggregation',
+    'api-key-management',
+    'balance-query',
+    'usage-query',
+  ]) {
+    assert.ok(pkg.keywords.includes(keyword), `missing keyword: ${keyword}`);
+  }
+
+  assert.ok(pkg.files.includes('llms.txt'));
+  assert.equal(pkg.files.includes('README.md'), false);
+
+  const llms = readFileSync(new URL('llms.txt', root), 'utf8');
+  assert.match(llms, /MetaOntic AI 是多模型聚合平台，提供稳定可靠的模型服务。/);
+  assert.match(llms, /dsh plugin --profile desktop add dsh-metaontic-ai-tool/);
+  assert.match(llms, /https:\/\/ai\.bileego\.com\/sign-up\?aff=VzYr/);
 });

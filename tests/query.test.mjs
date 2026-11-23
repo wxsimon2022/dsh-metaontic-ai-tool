@@ -5,13 +5,19 @@ import { join } from 'node:path';
 import test from 'node:test';
 import { pathToFileURL } from 'node:url';
 import {
+  createApiKey,
+  createApiKeysHandler,
   createLoginStore,
   createQueryHandler,
   createSessionHandler,
+  deleteApiKey,
+  listApiKeys,
   normalizeAccessToken,
   normalizeBaseUrl,
   QueryError,
   queryPlatform,
+  revealApiKey,
+  setApiKeyStatus,
 } from '../dist/index.js';
 
 function jsonResponse(payload, status = 200) {
@@ -209,4 +215,120 @@ test('clears the saved login on logout or an invalid saved token', async t => {
   const logoutResponse = await logout(new Request('http://localhost/session', { method: 'DELETE' }));
   assert.equal(logoutResponse.status, 200);
   assert.equal(await store.load(), null);
+});
+
+test('lists API keys without returning full key material', async () => {
+  const requests = [];
+  const keyFetch = async (url, init) => {
+    const parsed = new URL(url);
+    requests.push({ path: parsed.pathname, search: parsed.search, method: init.method, authorization: init.headers.authorization });
+    return jsonResponse({
+      success: true,
+      data: {
+        page: 1,
+        page_size: 100,
+        total: 1,
+        items: [{
+          id: 60,
+          name: 'video-key',
+          key: 'sk-must-not-leak',
+          status: 1,
+          remain_quota: 146602,
+          unlimited_quota: false,
+          used_quota: 5835067,
+          expired_time: -1,
+          group: 'svip',
+        }],
+      },
+    });
+  };
+
+  const result = await listApiKeys({
+    baseUrl: 'https://example.com/',
+    accessToken: 'saved-test-token',
+    fetchImpl: keyFetch,
+  });
+
+  assert.equal(requests[0].path, '/api/token/');
+  assert.equal(requests[0].search, '?p=0&size=100');
+  assert.equal(requests[0].method, 'GET');
+  assert.equal(requests[0].authorization, 'Bearer saved-test-token');
+  assert.equal(result.total, 1);
+  assert.equal(result.keys[0].id, 60);
+  assert.equal(result.keys[0].name, 'video-key');
+  assert.equal('key' in result.keys[0], false);
+  assert.equal(JSON.stringify(result).includes('sk-must-not-leak'), false);
+});
+
+test('creates API keys with validated fields', async () => {
+  let captured;
+  const keyFetch = async (url, init) => {
+    captured = { url, method: init.method, body: JSON.parse(init.body) };
+    return jsonResponse({ success: true, message: '' });
+  };
+
+  const result = await createApiKey({
+    baseUrl: 'https://example.com/',
+    accessToken: 'saved-test-token',
+    fetchImpl: keyFetch,
+    name: '  dsh-key  ',
+    unlimitedQuota: false,
+    remainQuota: 500000,
+    expiredTime: 1790000000,
+    group: 'svip',
+  });
+
+  assert.deepEqual(result, { created: true, name: 'dsh-key' });
+  assert.equal(captured.method, 'POST');
+  assert.equal(captured.url, 'https://example.com/api/token/');
+  assert.deepEqual(captured.body, {
+    name: 'dsh-key',
+    remain_quota: 500000,
+    unlimited_quota: false,
+    expired_time: 1790000000,
+    model_limits_enabled: false,
+    model_limits: '',
+    allow_ips: '',
+    cross_group_retry: false,
+    group: 'svip',
+  });
+
+  await assert.rejects(
+    createApiKey({ baseUrl: 'https://example.com/', accessToken: 'saved-test-token', fetchImpl: keyFetch, name: '   ' }),
+    error => error.code === 'API_KEY_NAME_REQUIRED',
+  );
+});
+
+test('updates, deletes and explicitly reveals API keys', async () => {
+  const requests = [];
+  const keyFetch = async (url, init) => {
+    const parsed = new URL(url);
+    requests.push({ path: parsed.pathname, search: parsed.search, method: init.method, body: init.body && JSON.parse(init.body) });
+    if (init.method === 'POST') return jsonResponse({ success: true, data: { key: 'sk-explicit-reveal' } });
+    return jsonResponse({ success: true, message: '' });
+  };
+  const common = {
+    baseUrl: 'https://example.com/',
+    accessToken: 'saved-test-token',
+    fetchImpl: keyFetch,
+  };
+
+  assert.deepEqual(await setApiKeyStatus({ ...common, id: 60, status: 2 }), { id: 60, status: 2 });
+  assert.deepEqual(await deleteApiKey({ ...common, id: 60 }), { id: 60, deleted: true });
+  assert.deepEqual(await revealApiKey({ ...common, id: 60 }), { id: 60, key: 'sk-explicit-reveal' });
+
+  assert.deepEqual(requests, [
+    { path: '/api/token/', search: '?status_only=true', method: 'PUT', body: { id: 60, status: 2 } },
+    { path: '/api/token/60', search: '', method: 'DELETE', body: undefined },
+    { path: '/api/token/60/key', search: '', method: 'POST', body: undefined },
+  ]);
+});
+
+test('API key routes require a saved login', async () => {
+  const handler = createApiKeysHandler({ store: null });
+  const response = await handler(new Request('http://localhost/api-keys', { method: 'GET' }));
+  const payload = await response.json();
+  assert.equal(response.status, 401);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.error.code, 'LOGIN_REQUIRED');
 });

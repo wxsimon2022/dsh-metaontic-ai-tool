@@ -11,8 +11,8 @@ This repository is the `dsh` Host and browser plugin for the MetaOntic AI multi-
 - `npm run check` runs type checking and validates test syntax.
 - `npm test` builds, then runs the offline `node:test` suite against `dist/`.
 - `npm run pack:check` verifies the published file list.
-- `npm run pack:plugin` builds `release/dsh-metaontic-ai-tool-0.0.4.tgz` and removes its README so the plugin settings page does not render the repository README.
-- `dsh plugin --profile desktop add ./release/dsh-metaontic-ai-tool-0.0.4.tgz` installs it locally.
+- `npm run pack:plugin` builds `release/dsh-metaontic-ai-tool-0.0.6.tgz` and removes its README so the plugin settings page does not render the repository README.
+- `dsh plugin --profile desktop add ./release/dsh-metaontic-ai-tool-0.0.6.tgz` installs it locally.
 
 Use Node.js 20 or newer. Run `npm install`, `npm run check`, and `npm test` before submitting changes. Never edit `dist/` by hand; it is generated and ignored by Git.
 
@@ -30,4 +30,4 @@ Use concise imperative subjects, for example `Add access-token platform query`. 
 
 ## Security & Configuration
 
-Access tokens are entered by users and saved only by the Host in the active profile at `.dsh-metaontic-ai-tool/login.json` with directory mode `0700` and file mode `0600`. Never send the saved token back to the browser, and never log, echo, or include tokens in URLs, fixtures, commits, or release notes. Keep `redirect: 'error'` and timeouts on upstream requests. Only expose approved account fields; do not return upstream tokens, email, or unrelated settings. The default platform URL is `https://ai.bileego.com/`.
+Access tokens are entered by users and saved only by the Host in the active profile at `.dsh-metaontic-ai-tool/login.json` with directory mode `0700` and file mode `0600`. Never send the saved token back to the browser, and never log, echo, or include tokens in URLs, fixtures, commits, or release notes. Keep `redirect: 'error'` and timeouts on upstream requests. Only expose approved account fields; do not return upstream tokens, email, or unrelated settings. API Key lists must stay masked; full API Key material may be read only through an explicit per-key reveal request and must never be persisted by the browser. The default platform URL is `https://ai.bileego.com/`.

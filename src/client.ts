@@ -2,6 +2,7 @@ const PANEL_ID = 'dsh-metaontic-ai-tool';
 const NS = 'sidebar.metaonticAiTool';
 const QUERY_PATH = '/api/dsh-metaontic-ai-tool.query';
 const SESSION_PATH = '/api/dsh-metaontic-ai-tool.session';
+const API_KEYS_PATH = '/api/dsh-metaontic-ai-tool.api-keys';
 const DEFAULT_BASE_URL = 'https://ai.bileego.com/';
 const REGISTER_URL = 'https://ai.bileego.com/sign-up?aff=VzYr';
 
@@ -36,7 +37,8 @@ const zh = {
   balance: '可用余额',
   usedQuota: '已用额度',
   requests: '请求次数',
-  usageRatio: '额度使用情况',
+  usageRatio: '额度剩余情况',
+  usageRemainingPercent: '剩余 {percent}%',
   username: '用户名',
   displayName: '显示名称',
   group: '用户分组',
@@ -48,7 +50,55 @@ const zh = {
   serverAddress: '服务地址',
   currency: '结算币种',
   fetchedAt: '查询时间',
-  rawQuota: '剩余额度 {quota} · 已用 {used}',
+  rawQuota: '余额 {quota} · 累计已用 {used}',
+  apiKeys: 'API Key 管理',
+  apiKeysHint: '为应用创建和管理访问密钥。完整密钥仅在点击显示时读取，不会随列表下发。',
+  apiKeyRefresh: '刷新',
+  apiKeyRefreshing: '正在刷新…',
+  apiKeyNew: '新建 API Key',
+  apiKeyCreate: '创建',
+  apiKeyCreating: '正在创建…',
+  apiKeyCancel: '取消',
+  apiKeyName: '名称',
+  apiKeyNamePlaceholder: '例如 dsh-desktop',
+  apiKeyUnlimited: '无限额度',
+  apiKeyQuota: '额度',
+  apiKeyQuotaPlaceholder: '例如 10',
+  apiKeyQuotaHint: '按平台当前结算币种填写。',
+  apiKeyExpiryDays: '有效期（天）',
+  apiKeyNeverExpiresHint: '填 0 表示永不过期。',
+  apiKeyNone: '暂无 API Key，点击“新建 API Key”创建。',
+  apiKeyHidden: '点击“显示密钥”查看',
+  apiKeyShow: '显示密钥',
+  apiKeyHide: '隐藏密钥',
+  apiKeyCopy: '复制',
+  apiKeyCopied: 'API Key 已复制。',
+  apiKeyCopyUnavailable: '无法访问剪贴板，请手动选择并复制密钥。',
+  apiKeyCreated: 'API Key 已创建，请显示并妥善保存密钥。',
+  apiKeyDeleted: 'API Key 已删除。',
+  apiKeyEnabledNotice: 'API Key 已启用。',
+  apiKeyDisabledNotice: 'API Key 已禁用。',
+  apiKeyDeleteConfirm: '确定删除 API Key“{name}”吗？此操作不可撤销。',
+  apiKeyDelete: '删除',
+  apiKeyEnable: '启用',
+  apiKeyDisable: '禁用',
+  apiKeyStatusEnabled: '已启用',
+  apiKeyStatusDisabled: '已禁用',
+  apiKeyStatusExpired: '已过期',
+  apiKeyStatusExhausted: '额度用尽',
+  apiKeyStatusUnknown: '未知状态',
+  apiKeyQuotaLabel: '剩余额度',
+  apiKeyUsedLabel: '已用额度',
+  apiKeyExpires: '过期时间',
+  apiKeyCreatedAt: '创建时间',
+  neverExpires: '永不过期',
+  unlimited: '无限',
+  apiKeyLoadFailed: 'API Key 列表加载失败。',
+  apiKeyActionFailed: 'API Key 操作失败。',
+  apiKeyRevealFailed: '读取 API Key 失败。',
+  apiKeyNameRequired: '请填写 API Key 名称。',
+  apiKeyQuotaInvalid: '额度格式无效。',
+  apiKeyExpiryInvalid: '有效期格式无效。',
   enabled: '正常',
   disabled: '已禁用',
   roleUser: '普通用户',
@@ -89,7 +139,8 @@ const en = {
   balance: 'Available balance',
   usedQuota: 'Used quota',
   requests: 'Requests',
-  usageRatio: 'Quota usage',
+  usageRatio: 'Remaining quota',
+  usageRemainingPercent: 'Remaining {percent}%',
   username: 'Username',
   displayName: 'Display name',
   group: 'Group',
@@ -101,7 +152,55 @@ const en = {
   serverAddress: 'Server address',
   currency: 'Currency',
   fetchedAt: 'Queried at',
-  rawQuota: 'Remaining {quota} · Used {used}',
+  rawQuota: 'Balance {quota} · Cumulative used {used}',
+  apiKeys: 'API Key management',
+  apiKeysHint: 'Create and manage access keys for applications. Full keys are read only when explicitly shown and are never included in the list response.',
+  apiKeyRefresh: 'Refresh',
+  apiKeyRefreshing: 'Refreshing…',
+  apiKeyNew: 'New API Key',
+  apiKeyCreate: 'Create',
+  apiKeyCreating: 'Creating…',
+  apiKeyCancel: 'Cancel',
+  apiKeyName: 'Name',
+  apiKeyNamePlaceholder: 'For example, dsh-desktop',
+  apiKeyUnlimited: 'Unlimited quota',
+  apiKeyQuota: 'Quota',
+  apiKeyQuotaPlaceholder: 'For example, 10',
+  apiKeyQuotaHint: 'Enter an amount in the platform display currency.',
+  apiKeyExpiryDays: 'Valid for (days)',
+  apiKeyNeverExpiresHint: 'Use 0 for no expiration.',
+  apiKeyNone: 'No API keys yet. Click “New API Key” to create one.',
+  apiKeyHidden: 'Click “Show key” to reveal',
+  apiKeyShow: 'Show key',
+  apiKeyHide: 'Hide key',
+  apiKeyCopy: 'Copy',
+  apiKeyCopied: 'API Key copied.',
+  apiKeyCopyUnavailable: 'Clipboard access is unavailable. Select and copy the key manually.',
+  apiKeyCreated: 'API Key created. Show it and store it securely.',
+  apiKeyDeleted: 'API Key deleted.',
+  apiKeyEnabledNotice: 'API Key enabled.',
+  apiKeyDisabledNotice: 'API Key disabled.',
+  apiKeyDeleteConfirm: 'Delete API Key “{name}”? This cannot be undone.',
+  apiKeyDelete: 'Delete',
+  apiKeyEnable: 'Enable',
+  apiKeyDisable: 'Disable',
+  apiKeyStatusEnabled: 'Enabled',
+  apiKeyStatusDisabled: 'Disabled',
+  apiKeyStatusExpired: 'Expired',
+  apiKeyStatusExhausted: 'Quota exhausted',
+  apiKeyStatusUnknown: 'Unknown status',
+  apiKeyQuotaLabel: 'Remaining quota',
+  apiKeyUsedLabel: 'Used quota',
+  apiKeyExpires: 'Expires',
+  apiKeyCreatedAt: 'Created',
+  neverExpires: 'Never expires',
+  unlimited: 'Unlimited',
+  apiKeyLoadFailed: 'Could not load API keys.',
+  apiKeyActionFailed: 'API Key operation failed.',
+  apiKeyRevealFailed: 'Could not read the API Key.',
+  apiKeyNameRequired: 'Enter an API Key name.',
+  apiKeyQuotaInvalid: 'Invalid quota amount.',
+  apiKeyExpiryInvalid: 'Invalid expiration period.',
   enabled: 'Active',
   disabled: 'Disabled',
   roleUser: 'User',
@@ -153,6 +252,10 @@ const PANEL_CSS = `
   .mat-metric-value{margin-top:5px;font-size:18px;font-weight:680;line-height:1.2;overflow-wrap:anywhere}
   .mat-progress{height:7px;border-radius:999px;background:var(--dsw-alias-bg-layer-2,#eef1f5);overflow:hidden;margin:12px 0 7px}
   .mat-progress-bar{height:100%;border-radius:inherit;background:var(--dsw-alias-brand-primary,#2563eb)}
+  .mat-progress-bar.mat-progress-warn{background:#d97706}
+  .mat-progress-bar.mat-progress-danger{background:#dc2626}
+  .mat-ratio-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:13px}
+  .mat-ratio-value{color:var(--dsw-alias-label-secondary,#67707c);font-size:11.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
   .mat-rows{display:flex;flex-direction:column;gap:8px}
   .mat-row{display:grid;grid-template-columns:minmax(90px,128px) minmax(0,1fr);gap:10px;border-top:1px dashed var(--dsw-alias-border-l1,#e4e8ee);padding-top:8px}
   .mat-row:first-child{border-top:0;padding-top:0}
@@ -160,7 +263,27 @@ const PANEL_CSS = `
   .mat-row-value{min-width:0;overflow-wrap:anywhere;font-size:12px}
   .mat-mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px}
   .mat-foot{margin-top:14px;text-align:right}
-  @media (max-width:620px){.mat-root{padding:20px 16px 32px}.mat-metrics{grid-template-columns:1fr}.mat-row{grid-template-columns:1fr;gap:3px}}
+  .mat-api-keys{margin-top:12px}
+  .mat-card-head-copy{min-width:0}
+  .mat-card-head-copy .mat-hint{margin-top:3px}
+  .mat-key-create{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(120px,.8fr) minmax(120px,.8fr);gap:10px;align-items:end;border:1px dashed var(--dsw-alias-border-l1,#e4e8ee);border-radius:11px;padding:12px;margin:0 0 12px}
+  .mat-key-create .mat-field{gap:5px}
+  .mat-key-check{display:flex;align-items:center;gap:7px;min-height:38px;font-size:12px;font-weight:600}
+  .mat-key-create-actions{display:flex;flex-wrap:wrap;gap:8px;grid-column:1/-1;justify-content:flex-end}
+  .mat-key-list{display:flex;flex-direction:column;gap:9px}
+  .mat-key-item{border:1px solid var(--dsw-alias-border-l1,#e4e8ee);border-radius:11px;padding:12px;background:var(--dsw-alias-bg-layer-1,#fff)}
+  .mat-key-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:9px}
+  .mat-key-name{min-width:0;flex:1 1 180px;font-size:13px;font-weight:650;overflow-wrap:anywhere}
+  .mat-key-secret{display:block;box-sizing:border-box;width:100%;border-radius:8px;background:var(--dsw-alias-bg-layer-2,#f5f7fa);padding:8px 9px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;overflow-wrap:anywhere;user-select:all}
+  .mat-key-secret-empty{color:var(--dsw-alias-label-secondary,#67707c);user-select:none}
+  .mat-key-meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:10px 0}
+  .mat-key-meta-label{color:var(--dsw-alias-label-secondary,#67707c);font-size:10.5px}
+  .mat-key-meta-value{margin-top:3px;font-size:12px;font-weight:600;overflow-wrap:anywhere}
+  .mat-key-actions{display:flex;flex-wrap:wrap;gap:7px}
+  .mat-btn-sm{height:30px;padding:0 10px;font-size:11.5px}
+  .mat-btn-danger{border-color:color-mix(in srgb,var(--dsw-alias-state-error-primary,#c62828) 28%,transparent);color:var(--dsw-alias-state-error-primary,#c62828)}
+  .mat-btn-danger:hover{background:color-mix(in srgb,var(--dsw-alias-state-error-primary,#c62828) 8%,transparent)}
+  @media (max-width:620px){.mat-root{padding:20px 16px 32px}.mat-metrics{grid-template-columns:1fr}.mat-row{grid-template-columns:1fr;gap:3px}.mat-key-create{grid-template-columns:1fr}.mat-key-meta{grid-template-columns:1fr}}
 `;
 
 type SetState<T> = (value: T | ((previous: T) => T)) => void;
@@ -207,6 +330,20 @@ interface DashboardData {
   persisted?: boolean;
 }
 
+interface ApiKeyInfo {
+  id?: number | string;
+  name?: string;
+  status?: number | string;
+  created_time?: number | string;
+  accessed_time?: number | string;
+  expired_time?: number | string;
+  remain_quota?: number | string;
+  unlimited_quota?: boolean;
+  used_quota?: number | string;
+  model_limits_enabled?: boolean;
+  group?: string;
+}
+
 interface ApiError {
   code?: string;
   message?: string;
@@ -228,8 +365,26 @@ interface QueryPayload {
   error?: ApiError;
 }
 
+interface ApiKeysPayload {
+  ok?: boolean;
+  data?: { keys?: ApiKeyInfo[]; total?: number };
+  error?: ApiError;
+}
+
+interface ApiKeySecretPayload {
+  ok?: boolean;
+  data?: { id?: number | string; key?: string };
+  error?: ApiError;
+}
+
+interface ApiKeyActionPayload {
+  ok?: boolean;
+  data?: unknown;
+  error?: ApiError;
+}
+
 interface ChangeEventLike {
-  target: { value: string };
+  target: { value: string; checked?: boolean };
 }
 
 interface FormEventLike {
@@ -297,6 +452,46 @@ function formatQuota(quota: unknown, platform?: PlatformInfo): string {
   const perUnit = Number(platform?.quota_per_unit) || 500000;
   const unit = currency(platform);
   return `${unit.symbol}${formatNumber((Number(quota) || 0) / perUnit * unit.rate)}`;
+}
+
+function formatPercent(value: number): string {
+  return value.toFixed(1).replace(/\.0$/, '');
+}
+
+function displayQuotaToUnits(value: unknown, platform?: PlatformInfo): number | null {
+  const amount = Number(value);
+  if (!Number.isFinite(amount) || amount < 0) return null;
+  const perUnit = Number(platform?.quota_per_unit) || 500000;
+  const rate = currency(platform).rate || 1;
+  const units = Math.round(amount * perUnit / rate);
+  return Number.isSafeInteger(units) && units >= 0 ? units : null;
+}
+
+function expiryTimeFromDays(value: unknown): number | null {
+  const days = Number(value ?? 0);
+  if (!Number.isFinite(days) || days < 0 || days > 36500) return null;
+  if (days === 0) return -1;
+  return Math.floor(Date.now() / 1000 + days * 86400);
+}
+
+function apiKeyStatusLabel(t: DshTranslate, status: unknown): string {
+  const value = Number(status);
+  if (value === 1) return t('apiKeyStatusEnabled');
+  if (value === 2) return t('apiKeyStatusDisabled');
+  if (value === 3) return t('apiKeyStatusExpired');
+  if (value === 4) return t('apiKeyStatusExhausted');
+  return t('apiKeyStatusUnknown');
+}
+
+function apiKeyStatusTone(status: unknown): string {
+  return Number(status) === 1 ? 'mat-badge-ok' : 'mat-badge-warn';
+}
+
+function apiKeyExpiryLabel(t: DshTranslate, expiredTime: unknown): string {
+  const seconds = Number(expiredTime);
+  if (seconds === -1) return t('neverExpires');
+  if (!Number.isFinite(seconds) || seconds <= 0) return t('empty');
+  return new Date(seconds * 1000).toLocaleString();
 }
 
 function roleLabel(t: DshTranslate, role: unknown): string {
@@ -414,7 +609,8 @@ function createPanel(React: ReactLike, h: HFunction, t: DshTranslate) {
     const remaining = Number(account.quota) || 0;
     const used = Number(account.used_quota) || 0;
     const total = remaining + used;
-    const percentage = total > 0 ? Math.min(100, Math.max(0, used / total * 100)) : 0;
+    const remainingPercentage = total > 0 ? Math.min(100, Math.max(0, remaining / total * 100)) : 0;
+    const progressTone = remainingPercentage <= 5 ? ' mat-progress-danger' : remainingPercentage <= 20 ? ' mat-progress-warn' : '';
     const statusActive = Number(account.status) !== 2;
     return h('section', { className: 'mat-card' }, [
       h('div', { key: 'head', className: 'mat-card-head' }, [
@@ -436,12 +632,28 @@ function createPanel(React: ReactLike, h: HFunction, t: DshTranslate) {
           h('div', { key: 'value', className: 'mat-metric-value' }, String(Number(account.request_count) || 0)),
         ]),
       ]),
-      h('div', { key: 'ratio-label', className: 'mat-hint', style: { marginTop: 13 } }, t('usageRatio')),
-      h('div', { key: 'progress', className: 'mat-progress', role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': Math.round(percentage) },
-        h('div', { className: 'mat-progress-bar', style: { width: `${percentage}%` } })),
+      h('div', { key: 'ratio-label', className: 'mat-ratio-head' }, [
+        h('div', { key: 'label', className: 'mat-hint' }, t('usageRatio')),
+        h('div', { key: 'value', className: 'mat-ratio-value' }, t('usageRemainingPercent', {
+          percent: formatPercent(remainingPercentage),
+        })),
+      ]),
+      h('div', {
+        key: 'progress',
+        className: 'mat-progress',
+        role: 'progressbar',
+        'aria-valuemin': 0,
+        'aria-valuemax': 100,
+        'aria-valuenow': Math.round(remainingPercentage),
+        'aria-valuetext': t('usageRemainingPercent', { percent: formatPercent(remainingPercentage) }),
+        title: t('rawQuota', {
+          quota: formatQuota(remaining, platform),
+          used: formatQuota(used, platform),
+        }),
+      }, h('div', { className: `mat-progress-bar${progressTone}`, style: { width: `${remainingPercentage}%` } })),
       h('div', { key: 'raw', className: 'mat-hint' }, t('rawQuota', {
-        quota: remaining.toLocaleString(),
-        used: used.toLocaleString(),
+        quota: formatQuota(remaining, platform),
+        used: formatQuota(used, platform),
       })),
       h('div', { key: 'rows', className: 'mat-rows', style: { marginTop: 14 } }, [
         h(Row, { key: 'username', label: t('username'), value: account.username }),
@@ -468,6 +680,389 @@ function createPanel(React: ReactLike, h: HFunction, t: DshTranslate) {
         h(Row, { key: 'currency', label: t('currency'), value: unit.code }),
         h(Row, { key: 'time', label: t('fetchedAt'), value: new Date(fetchedAt).toLocaleString(), mono: true }),
       ]),
+    ]);
+  }
+
+  function ApiKeysCard({ data }: CardProps) {
+    const [keys, setKeys] = React.useState<ApiKeyInfo[]>([]);
+    const [loading, setLoading] = React.useState<boolean>(true);
+    const [error, setError] = React.useState<string>('');
+    const [notice, setNotice] = React.useState<string>('');
+    const [busyId, setBusyId] = React.useState<number | null>(null);
+    const [createOpen, setCreateOpen] = React.useState<boolean>(false);
+    const [creating, setCreating] = React.useState<boolean>(false);
+    const [name, setName] = React.useState<string>('');
+    const [unlimited, setUnlimited] = React.useState<boolean>(true);
+    const [quota, setQuota] = React.useState<string>('');
+    const [expiryDays, setExpiryDays] = React.useState<string>('0');
+    const [revealed, setRevealed] = React.useState<Record<string, string>>({});
+
+    async function loadKeys(showLoading = true): Promise<void> {
+      if (showLoading) setLoading(true);
+      setError('');
+      try {
+        const response = await fetch(API_KEYS_PATH, { method: 'GET', cache: 'no-store' });
+        let payload: ApiKeysPayload;
+        try {
+          payload = await response.json() as ApiKeysPayload;
+        } catch {
+          throw new Error(t('invalidResponse'));
+        }
+        if (!response.ok || !payload?.ok) {
+          throw new Error(payload?.error?.message || t('apiKeyLoadFailed'));
+        }
+        setKeys(Array.isArray(payload.data?.keys) ? payload.data.keys : []);
+        setRevealed({});
+      } catch (failure) {
+        setError(failure instanceof Error && failure.message ? failure.message : t('apiKeyLoadFailed'));
+      } finally {
+        if (showLoading) setLoading(false);
+      }
+    }
+
+    React.useEffect(() => {
+      void loadKeys();
+    }, [data.baseUrl]);
+
+    function resetCreateForm(): void {
+      setName('');
+      setUnlimited(true);
+      setQuota('');
+      setExpiryDays('0');
+    }
+
+    async function createKey(event?: FormEventLike): Promise<void> {
+      event?.preventDefault?.();
+      const keyName = name.trim();
+      if (!keyName) {
+        setError(t('apiKeyNameRequired'));
+        return;
+      }
+      let remainQuota = 0;
+      if (!unlimited) {
+        const units = displayQuotaToUnits(quota, data.platform);
+        if (units === null) {
+          setError(t('apiKeyQuotaInvalid'));
+          return;
+        }
+        remainQuota = units;
+      }
+      const expiredTime = expiryTimeFromDays(expiryDays);
+      if (expiredTime === null) {
+        setError(t('apiKeyExpiryInvalid'));
+        return;
+      }
+      setCreating(true);
+      setError('');
+      setNotice('');
+      try {
+        const response = await fetch(API_KEYS_PATH, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            name: keyName,
+            unlimitedQuota: unlimited,
+            remainQuota,
+            expiredTime,
+            group: data.account.group,
+          }),
+        });
+        let payload: ApiKeyActionPayload;
+        try {
+          payload = await response.json() as ApiKeyActionPayload;
+        } catch {
+          throw new Error(t('invalidResponse'));
+        }
+        if (!response.ok || !payload?.ok) {
+          throw new Error(payload?.error?.message || t('apiKeyActionFailed'));
+        }
+        setCreateOpen(false);
+        resetCreateForm();
+        setNotice(t('apiKeyCreated'));
+        await loadKeys(false);
+      } catch (failure) {
+        setError(failure instanceof Error && failure.message ? failure.message : t('apiKeyActionFailed'));
+      } finally {
+        setCreating(false);
+      }
+    }
+
+    async function toggleStatus(apiKey: ApiKeyInfo): Promise<void> {
+      const id = Number(apiKey.id);
+      if (!Number.isSafeInteger(id) || id <= 0) return;
+      const nextStatus = Number(apiKey.status) === 1 ? 2 : 1;
+      setBusyId(id);
+      setError('');
+      setNotice('');
+      try {
+        const response = await fetch(API_KEYS_PATH, {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ id, status: nextStatus }),
+        });
+        let payload: ApiKeyActionPayload;
+        try {
+          payload = await response.json() as ApiKeyActionPayload;
+        } catch {
+          throw new Error(t('invalidResponse'));
+        }
+        if (!response.ok || !payload?.ok) {
+          throw new Error(payload?.error?.message || t('apiKeyActionFailed'));
+        }
+        setNotice(nextStatus === 1 ? t('apiKeyEnabledNotice') : t('apiKeyDisabledNotice'));
+        await loadKeys(false);
+      } catch (failure) {
+        setError(failure instanceof Error && failure.message ? failure.message : t('apiKeyActionFailed'));
+      } finally {
+        setBusyId(null);
+      }
+    }
+
+    async function deleteKey(apiKey: ApiKeyInfo): Promise<void> {
+      const id = Number(apiKey.id);
+      if (!Number.isSafeInteger(id) || id <= 0) return;
+      const keyName = String(apiKey.name || id);
+      if (typeof confirm === 'function' && !confirm(t('apiKeyDeleteConfirm', { name: keyName }))) return;
+      setBusyId(id);
+      setError('');
+      setNotice('');
+      try {
+        const response = await fetch(API_KEYS_PATH, {
+          method: 'DELETE',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ id }),
+        });
+        let payload: ApiKeyActionPayload;
+        try {
+          payload = await response.json() as ApiKeyActionPayload;
+        } catch {
+          throw new Error(t('invalidResponse'));
+        }
+        if (!response.ok || !payload?.ok) {
+          throw new Error(payload?.error?.message || t('apiKeyActionFailed'));
+        }
+        setNotice(t('apiKeyDeleted'));
+        await loadKeys(false);
+      } catch (failure) {
+        setError(failure instanceof Error && failure.message ? failure.message : t('apiKeyActionFailed'));
+      } finally {
+        setBusyId(null);
+      }
+    }
+
+    async function toggleReveal(apiKey: ApiKeyInfo): Promise<void> {
+      const id = Number(apiKey.id);
+      if (!Number.isSafeInteger(id) || id <= 0) return;
+      if (revealed[String(id)]) {
+        setRevealed(previous => {
+          const next = { ...previous };
+          delete next[String(id)];
+          return next;
+        });
+        return;
+      }
+      setBusyId(id);
+      setError('');
+      setNotice('');
+      try {
+        const response = await fetch(API_KEYS_PATH, {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ id }),
+        });
+        let payload: ApiKeySecretPayload;
+        try {
+          payload = await response.json() as ApiKeySecretPayload;
+        } catch {
+          throw new Error(t('invalidResponse'));
+        }
+        const key = payload?.data?.key;
+        if (!response.ok || !payload?.ok || typeof key !== 'string' || !key) {
+          throw new Error(payload?.error?.message || t('apiKeyRevealFailed'));
+        }
+        setRevealed(previous => ({ ...previous, [String(id)]: key }));
+      } catch (failure) {
+        setError(failure instanceof Error && failure.message ? failure.message : t('apiKeyRevealFailed'));
+      } finally {
+        setBusyId(null);
+      }
+    }
+
+    async function copyKey(apiKey: ApiKeyInfo): Promise<void> {
+      const key = revealed[String(apiKey.id)];
+      if (!key) return;
+      try {
+        if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(key);
+          setNotice(t('apiKeyCopied'));
+        } else {
+          setNotice(t('apiKeyCopyUnavailable'));
+        }
+      } catch {
+        setNotice(t('apiKeyCopyUnavailable'));
+      }
+    }
+
+    const createForm = createOpen
+      ? h('form', { key: 'create', className: 'mat-key-create', onSubmit: createKey }, [
+        h('label', { key: 'name', className: 'mat-field' }, [
+          h('span', { key: 'label', className: 'mat-label' }, t('apiKeyName')),
+          h('input', {
+            key: 'input',
+            className: 'mat-input',
+            value: name,
+            onChange: (event: ChangeEventLike) => setName(event.target.value),
+            placeholder: t('apiKeyNamePlaceholder'),
+            maxLength: 50,
+            autoComplete: 'off',
+            disabled: creating,
+            required: true,
+          }),
+        ]),
+        h('label', { key: 'quota', className: 'mat-field' }, [
+          h('span', { key: 'label', className: 'mat-label' }, t('apiKeyQuota')),
+          h('input', {
+            key: 'input',
+            className: 'mat-input',
+            type: 'number',
+            min: 0,
+            step: 0.01,
+            value: quota,
+            onChange: (event: ChangeEventLike) => setQuota(event.target.value),
+            placeholder: t('apiKeyQuotaPlaceholder'),
+            disabled: creating || unlimited,
+          }),
+          h('span', { key: 'hint', className: 'mat-hint' }, t('apiKeyQuotaHint')),
+        ]),
+        h('label', { key: 'expiry', className: 'mat-field' }, [
+          h('span', { key: 'label', className: 'mat-label' }, t('apiKeyExpiryDays')),
+          h('input', {
+            key: 'input',
+            className: 'mat-input',
+            type: 'number',
+            min: 0,
+            step: 1,
+            value: expiryDays,
+            onChange: (event: ChangeEventLike) => setExpiryDays(event.target.value),
+            disabled: creating,
+          }),
+          h('span', { key: 'hint', className: 'mat-hint' }, t('apiKeyNeverExpiresHint')),
+        ]),
+        h('label', { key: 'unlimited', className: 'mat-key-check' }, [
+          h('input', {
+            key: 'input',
+            type: 'checkbox',
+            checked: unlimited,
+            onChange: (event: ChangeEventLike) => setUnlimited(Boolean(event.target.checked)),
+            disabled: creating,
+          }),
+          h('span', { key: 'label' }, t('apiKeyUnlimited')),
+        ]),
+        h('div', { key: 'actions', className: 'mat-key-create-actions' }, [
+          h('button', { key: 'cancel', type: 'button', className: 'mat-btn mat-btn-sm', onClick: () => {
+            setCreateOpen(false);
+            resetCreateForm();
+          }, disabled: creating }, t('apiKeyCancel')),
+          h('button', { key: 'submit', type: 'submit', className: 'mat-btn mat-btn-primary mat-btn-sm', disabled: creating },
+            creating ? t('apiKeyCreating') : t('apiKeyCreate')),
+        ]),
+      ])
+      : null;
+
+    return h('section', { className: 'mat-card mat-api-keys' }, [
+      h('div', { key: 'head', className: 'mat-card-head' }, [
+        h('div', { key: 'copy', className: 'mat-card-head-copy' }, [
+          h('div', { key: 'title', className: 'mat-card-title' }, t('apiKeys')),
+          h('div', { key: 'hint', className: 'mat-hint' }, t('apiKeysHint')),
+        ]),
+        h('div', { key: 'head-actions', className: 'mat-actions' }, [
+          h('button', {
+            key: 'refresh',
+            type: 'button',
+            className: 'mat-btn mat-btn-sm',
+            onClick: () => void loadKeys(),
+            disabled: loading,
+          }, loading ? t('apiKeyRefreshing') : t('apiKeyRefresh')),
+          h('button', {
+            key: 'new',
+            type: 'button',
+            className: 'mat-btn mat-btn-primary mat-btn-sm',
+            onClick: () => {
+              setCreateOpen(value => !value);
+              setError('');
+              setNotice('');
+            },
+          }, createOpen ? t('apiKeyCancel') : t('apiKeyNew')),
+        ]),
+      ]),
+      error ? h('div', { key: 'error', className: 'mat-error', role: 'alert', style: { marginBottom: 10 } }, error) : null,
+      notice ? h('div', { key: 'notice', className: 'mat-notice', role: 'status', style: { marginBottom: 10 } }, notice) : null,
+      createForm,
+      loading && keys.length === 0
+        ? h('p', { key: 'loading', className: 'mat-hint' }, t('apiKeyRefreshing'))
+        : keys.length === 0
+        ? h('p', { key: 'empty', className: 'mat-hint' }, t('apiKeyNone'))
+        : h('div', { key: 'list', className: 'mat-key-list' }, keys.map(apiKey => {
+          const id = Number(apiKey.id);
+          const keyText = revealed[String(id)];
+          const enabled = Number(apiKey.status) === 1;
+          return h('div', { key: String(apiKey.id), className: 'mat-key-item' }, [
+            h('div', { key: 'head', className: 'mat-key-head' }, [
+              h('div', { key: 'name', className: 'mat-key-name' }, apiKey.name || t('empty')),
+              h('span', { key: 'status', className: `mat-badge ${apiKeyStatusTone(apiKey.status)}` },
+                apiKeyStatusLabel(t, apiKey.status)),
+              apiKey.group ? h('span', { key: 'group', className: 'mat-badge' }, apiKey.group) : null,
+            ]),
+            h('code', {
+              key: 'secret',
+              className: `mat-key-secret${keyText ? '' : ' mat-key-secret-empty'}`,
+            }, keyText || t('apiKeyHidden')),
+            h('div', { key: 'meta', className: 'mat-key-meta' }, [
+              h('div', { key: 'quota' }, [
+                h('div', { key: 'label', className: 'mat-key-meta-label' }, t('apiKeyQuotaLabel')),
+                h('div', { key: 'value', className: 'mat-key-meta-value' },
+                  apiKey.unlimited_quota ? t('unlimited') : formatQuota(apiKey.remain_quota, data.platform)),
+              ]),
+              h('div', { key: 'used' }, [
+                h('div', { key: 'label', className: 'mat-key-meta-label' }, t('apiKeyUsedLabel')),
+                h('div', { key: 'value', className: 'mat-key-meta-value' }, formatQuota(apiKey.used_quota, data.platform)),
+              ]),
+              h('div', { key: 'expires' }, [
+                h('div', { key: 'label', className: 'mat-key-meta-label' }, t('apiKeyExpires')),
+                h('div', { key: 'value', className: 'mat-key-meta-value' }, apiKeyExpiryLabel(t, apiKey.expired_time)),
+              ]),
+            ]),
+            h('div', { key: 'actions', className: 'mat-key-actions' }, [
+              h('button', {
+                key: 'reveal',
+                type: 'button',
+                className: 'mat-btn mat-btn-sm',
+                onClick: () => void toggleReveal(apiKey),
+                disabled: busyId === id,
+              }, keyText ? t('apiKeyHide') : t('apiKeyShow')),
+              keyText ? h('button', {
+                key: 'copy',
+                type: 'button',
+                className: 'mat-btn mat-btn-sm',
+                onClick: () => void copyKey(apiKey),
+              }, t('apiKeyCopy')) : null,
+              h('button', {
+                key: 'toggle',
+                type: 'button',
+                className: 'mat-btn mat-btn-sm',
+                onClick: () => void toggleStatus(apiKey),
+                disabled: busyId === id,
+              }, enabled ? t('apiKeyDisable') : t('apiKeyEnable')),
+              h('button', {
+                key: 'delete',
+                type: 'button',
+                className: 'mat-btn mat-btn-sm mat-btn-danger',
+                onClick: () => void deleteKey(apiKey),
+                disabled: busyId === id,
+              }, t('apiKeyDelete')),
+            ]),
+          ]);
+        })),
     ]);
   }
 
@@ -637,6 +1232,7 @@ function createPanel(React: ReactLike, h: HFunction, t: DshTranslate) {
               h(AccountCard, { key: 'account', data }),
               h(PlatformCard, { key: 'platform', data }),
             ]),
+            h(ApiKeysCard, { key: 'api-keys', data }),
           ])
           : h(LoginForm, {
             key: 'login',

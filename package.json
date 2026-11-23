@@ -1,7 +1,7 @@
 {
   "name": "dsh-metaontic-ai-tool",
-  "version": "0.0.4",
-  "description": "MetaOntic AI 是多模型聚合平台，提供稳定可靠的模型服务。本插件支持访问令牌登录与平台查询。",
+  "version": "0.0.6",
+  "description": "MetaOntic AI 多模型聚合平台的 DeepSeek Harness 管理插件：访问令牌登录、注册入口、余额与用量查询、API Key 管理。",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -9,6 +9,10 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/wxsimon2022/dsh-metaontic-ai-tool.git"
+  },
+  "homepage": "https://github.com/wxsimon2022/dsh-metaontic-ai-tool#readme",
+  "bugs": {
+    "url": "https://github.com/wxsimon2022/dsh-metaontic-ai-tool/issues"
   },
   "publishConfig": {
     "access": "public",
@@ -18,9 +22,19 @@
     "deepseek-harness",
     "dsh",
     "dsh-plugin",
+    "deepseek",
+    "metaontic-ai",
     "metaontic",
     "new-api",
-    "ai-management"
+    "model-aggregation",
+    "model-gateway",
+    "access-token-login",
+    "api-key-management",
+    "account-dashboard",
+    "balance-query",
+    "usage-query",
+    "ai-management",
+    "plugin-market"
   ],
   "exports": {
     ".": {
@@ -39,7 +53,8 @@
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
-    "LICENSE"
+    "LICENSE",
+    "llms.txt"
   ],
   "engines": {
     "node": ">=20"

@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const QUERY_ROUTE = '/api/dsh-metaontic-ai-tool.query';
 const SESSION_ROUTE = '/api/dsh-metaontic-ai-tool.session';
+const API_KEYS_ROUTE = '/api/dsh-metaontic-ai-tool.api-keys';
 const DEFAULT_BASE_URL = 'https://ai.bileego.com/';
 const DEFAULT_TIMEOUT_MS = 15_000;
 const MAX_REQUEST_BYTES = 16 * 1024;
@@ -36,11 +37,28 @@ const ACCOUNT_FIELDS = [
   'request_count',
 ] as const;
 
+const API_KEY_FIELDS = [
+  'id',
+  'name',
+  'status',
+  'created_time',
+  'accessed_time',
+  'expired_time',
+  'remain_quota',
+  'unlimited_quota',
+  'used_quota',
+  'model_limits_enabled',
+  'group',
+] as const;
+
 type PlatformField = (typeof PLATFORM_FIELDS)[number];
 type AccountField = (typeof ACCOUNT_FIELDS)[number];
+type ApiKeyField = (typeof API_KEY_FIELDS)[number];
 
 export type PlatformInfo = Partial<Record<PlatformField, unknown>>;
 export type AccountInfo = Partial<Record<AccountField, unknown>>;
+
+export type ApiKeyInfo = Partial<Record<ApiKeyField, unknown>>;
 
 export interface QueryResult {
   baseUrl: string;
@@ -58,10 +76,33 @@ export interface QueryOptions {
 
 export type QueryFunction = (options: QueryOptions) => Promise<QueryResult>;
 
-interface ReadJsonOptions {
+interface RequestJsonOptions {
   accessToken?: string;
   fetchImpl: typeof fetch;
   timeoutMs: number;
+  method?: string;
+  body?: unknown;
+}
+
+export interface CreateApiKeyOptions extends QueryOptions {
+  name: unknown;
+  unlimitedQuota?: unknown;
+  remainQuota?: unknown;
+  expiredTime?: unknown;
+  group?: unknown;
+}
+
+export interface ApiKeyStatusOptions extends QueryOptions {
+  id: unknown;
+  status: unknown;
+}
+
+export interface ApiKeyDeleteOptions extends QueryOptions {
+  id: unknown;
+}
+
+export interface ApiKeyRevealOptions extends QueryOptions {
+  id: unknown;
 }
 
 interface SettingsService {
@@ -113,6 +154,19 @@ interface QueryHandlerOptions {
 interface SessionHandlerOptions {
   store?: LoginStore | null;
   query?: QueryFunction;
+}
+
+interface ApiKeyService {
+  list: typeof listApiKeys;
+  create: typeof createApiKey;
+  setStatus: typeof setApiKeyStatus;
+  remove: typeof deleteApiKey;
+  reveal: typeof revealApiKey;
+}
+
+interface ApiKeyHandlerOptions {
+  store?: LoginStore | null;
+  service?: Partial<ApiKeyService>;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -193,22 +247,32 @@ function unwrap(payload: unknown): unknown {
   return isRecord(payload) && payload.data !== undefined ? payload.data : payload;
 }
 
-async function readJson(url: string, { accessToken, fetchImpl, timeoutMs }: ReadJsonOptions): Promise<unknown> {
+async function requestJson(url: string, {
+  accessToken,
+  fetchImpl,
+  timeoutMs,
+  method = 'GET',
+  body,
+}: RequestJsonOptions): Promise<unknown> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const headers: Record<string, string> = {
     accept: 'application/json',
-    'user-agent': 'dsh-metaontic-ai-tool/0.0.4',
+    'user-agent': 'dsh-metaontic-ai-tool/0.0.6',
   };
   if (accessToken) headers.authorization = `Bearer ${accessToken}`;
+  if (body !== undefined) headers['content-type'] = 'application/json';
+
+  const init: RequestInit = {
+    method,
+    headers,
+    redirect: 'error',
+    signal: controller.signal,
+  };
+  if (body !== undefined) init.body = JSON.stringify(body);
 
   try {
-    const response = await fetchImpl(url, {
-      method: 'GET',
-      headers,
-      redirect: 'error',
-      signal: controller.signal,
-    });
+    const response = await fetchImpl(url, init);
     const text = await response.text();
     let payload: unknown;
     try {
@@ -234,6 +298,10 @@ async function readJson(url: string, { accessToken, fetchImpl, timeoutMs }: Read
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function readJson(url: string, options: RequestJsonOptions): Promise<unknown> {
+  return requestJson(url, { ...options, method: 'GET', body: undefined });
 }
 
 export async function queryPlatform(options: QueryOptions = {}): Promise<QueryResult> {
@@ -269,6 +337,147 @@ export async function queryPlatform(options: QueryOptions = {}): Promise<QueryRe
     platform: pickFields(platform, PLATFORM_FIELDS),
     account: pickFields(account, ACCOUNT_FIELDS),
   };
+}
+
+function apiKeyId(value: unknown): number {
+  const id = Number(value);
+  if (!Number.isSafeInteger(id) || id <= 0) {
+    throw new QueryError('INVALID_API_KEY_ID', 'API Key ID 无效。');
+  }
+  return id;
+}
+
+function apiKeyName(value: unknown): string {
+  const name = String(value ?? '').trim();
+  if (!name) throw new QueryError('API_KEY_NAME_REQUIRED', '请填写 API Key 名称。');
+  if (name.length > 50 || /[\u0000-\u001f]/.test(name)) {
+    throw new QueryError('INVALID_API_KEY_NAME', 'API Key 名称无效，最多 50 个字符。');
+  }
+  return name;
+}
+
+function apiKeyQuota(value: unknown): number {
+  const quota = Number(value);
+  if (!Number.isSafeInteger(quota) || quota < 0) {
+    throw new QueryError('INVALID_API_KEY_QUOTA', 'API Key 额度必须是非负整数。');
+  }
+  return quota;
+}
+
+function apiKeyExpiredTime(value: unknown): number {
+  if (value === undefined || value === null || value === '') return -1;
+  const expiredTime = Number(value);
+  if (!Number.isSafeInteger(expiredTime) || (expiredTime !== -1 && expiredTime <= 0)) {
+    throw new QueryError('INVALID_API_KEY_EXPIRY', 'API Key 过期时间无效。');
+  }
+  return expiredTime;
+}
+
+function apiKeyGroup(value: unknown): string {
+  const group = String(value ?? '').trim();
+  if (group.length > 64 || /[\u0000-\u001f]/.test(group)) {
+    throw new QueryError('INVALID_API_KEY_GROUP', 'API Key 分组无效。');
+  }
+  return group;
+}
+
+function mapApiKey(value: unknown): ApiKeyInfo | null {
+  if (!isRecord(value)) return null;
+  const id = Number(value.id);
+  if (!Number.isSafeInteger(id) || id <= 0) return null;
+  return { ...pickFields(value, API_KEY_FIELDS), id };
+}
+
+function upstreamOptions(options: QueryOptions) {
+  const fetchImpl = options.fetchImpl ?? globalThis.fetch;
+  if (typeof fetchImpl !== 'function') {
+    throw new QueryError('NETWORK_ERROR', '当前运行环境不支持网络请求。', 502);
+  }
+  return {
+    baseUrl: normalizeBaseUrl(options.baseUrl),
+    accessToken: normalizeAccessToken(options.accessToken),
+    fetchImpl,
+    timeoutMs: options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+  };
+}
+
+export async function listApiKeys(options: QueryOptions = {}): Promise<{ keys: ApiKeyInfo[]; total: number }> {
+  const upstream = upstreamOptions(options);
+  const payload = await readJson(endpoint(upstream.baseUrl, 'api/token/?p=0&size=100'), upstream);
+  const data = unwrap(payload);
+  if (!isRecord(data) || !Array.isArray(data.items)) {
+    throw new QueryError('INVALID_RESPONSE', '平台返回的 API Key 列表不完整。', 502);
+  }
+  const keys = data.items.map(mapApiKey).filter((key): key is ApiKeyInfo => key !== null);
+  const total = Number(data.total);
+  return { keys, total: Number.isSafeInteger(total) && total >= 0 ? total : keys.length };
+}
+
+export async function createApiKey(options: CreateApiKeyOptions): Promise<{ created: true; name: string }> {
+  const upstream = upstreamOptions(options);
+  const unlimitedQuota = options.unlimitedQuota === undefined ? true : Boolean(options.unlimitedQuota);
+  const remainQuota = unlimitedQuota ? 0 : apiKeyQuota(options.remainQuota);
+  const group = apiKeyGroup(options.group);
+  const body: Record<string, unknown> = {
+    name: apiKeyName(options.name),
+    remain_quota: remainQuota,
+    unlimited_quota: unlimitedQuota,
+    expired_time: apiKeyExpiredTime(options.expiredTime),
+    model_limits_enabled: false,
+    model_limits: '',
+    allow_ips: '',
+    cross_group_retry: false,
+  };
+  if (group) body.group = group;
+  const payload = await requestJson(endpoint(upstream.baseUrl, 'api/token/'), {
+    ...upstream,
+    method: 'POST',
+    body,
+  });
+  unwrap(payload);
+  return { created: true, name: String(body.name) };
+}
+
+export async function setApiKeyStatus(options: ApiKeyStatusOptions): Promise<{ id: number; status: number }> {
+  const upstream = upstreamOptions(options);
+  const id = apiKeyId(options.id);
+  const status = Number(options.status);
+  if (status !== 1 && status !== 2) {
+    throw new QueryError('INVALID_API_KEY_STATUS', 'API Key 状态无效。');
+  }
+  const payload = await requestJson(endpoint(upstream.baseUrl, 'api/token/?status_only=true'), {
+    ...upstream,
+    method: 'PUT',
+    body: { id, status },
+  });
+  unwrap(payload);
+  return { id, status };
+}
+
+export async function deleteApiKey(options: ApiKeyDeleteOptions): Promise<{ id: number; deleted: true }> {
+  const upstream = upstreamOptions(options);
+  const id = apiKeyId(options.id);
+  const payload = await requestJson(endpoint(upstream.baseUrl, `api/token/${id}`), {
+    ...upstream,
+    method: 'DELETE',
+  });
+  unwrap(payload);
+  return { id, deleted: true };
+}
+
+export async function revealApiKey(options: ApiKeyRevealOptions): Promise<{ id: number; key: string }> {
+  const upstream = upstreamOptions(options);
+  const id = apiKeyId(options.id);
+  const payload = await requestJson(endpoint(upstream.baseUrl, `api/token/${id}/key`), {
+    ...upstream,
+    method: 'POST',
+  });
+  const data = unwrap(payload);
+  const key = isRecord(data) ? data.key : undefined;
+  if (typeof key !== 'string' || !key.trim() || key.length > MAX_TOKEN_LENGTH) {
+    throw new QueryError('INVALID_RESPONSE', '平台返回的 API Key 无效。', 502);
+  }
+  return { id, key };
 }
 
 async function exists(path: string): Promise<boolean> {
@@ -466,6 +675,65 @@ export function createSessionHandler({ store, query = queryPlatform }: SessionHa
   };
 }
 
+const defaultApiKeyService: ApiKeyService = {
+  list: listApiKeys,
+  create: createApiKey,
+  setStatus: setApiKeyStatus,
+  remove: deleteApiKey,
+  reveal: revealApiKey,
+};
+
+async function requireSavedLogin(store?: LoginStore | null): Promise<LoginRecord> {
+  const saved = store ? await store.load() : null;
+  if (!saved) {
+    throw new QueryError('LOGIN_REQUIRED', '请先登录后再管理 API Key。', 401);
+  }
+  return saved;
+}
+
+export function createApiKeysHandler({ store, service }: ApiKeyHandlerOptions = {}) {
+  const api = { ...defaultApiKeyService, ...service };
+
+  return async function handleApiKeysRequest(request: Request): Promise<Response> {
+    try {
+      const saved = await requireSavedLogin(store);
+      let data: unknown;
+      if (request.method === 'GET') {
+        data = await api.list(saved);
+      } else {
+        const body = await readRequestBody(request);
+        if (!isRecord(body)) throw new QueryError('INVALID_REQUEST', '请求内容无效。');
+        if (request.method === 'POST') {
+          data = await api.create({
+            ...saved,
+            name: body.name,
+            unlimitedQuota: body.unlimitedQuota,
+            remainQuota: body.remainQuota,
+            expiredTime: body.expiredTime,
+            group: body.group,
+          });
+        } else if (request.method === 'PATCH') {
+          data = await api.setStatus({ ...saved, id: body.id, status: body.status });
+        } else if (request.method === 'DELETE') {
+          data = await api.remove({ ...saved, id: body.id });
+        } else if (request.method === 'PUT') {
+          data = await api.reveal({ ...saved, id: body.id });
+        } else {
+          throw new QueryError('METHOD_NOT_ALLOWED', '不支持的请求方法。', 405);
+        }
+      }
+      return Response.json({ ok: true, data }, {
+        headers: { 'cache-control': 'no-store' },
+      });
+    } catch (error) {
+      if (error instanceof QueryError && error.code === 'AUTH_FAILED' && store) {
+        await store.clear().catch(() => {});
+      }
+      return errorResponse(error);
+    }
+  };
+}
+
 export const inject = ['connection'];
 
 export function apply(ctx: PluginContext): (() => void) | undefined {
@@ -487,6 +755,12 @@ export function apply(ctx: PluginContext): (() => void) | undefined {
       methods: ['GET', 'DELETE'],
       requestBody: 'buffered',
       fetch: createSessionHandler({ store }),
+    }),
+    connectionFetch.register({
+      path: API_KEYS_ROUTE,
+      methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT'],
+      requestBody: 'buffered',
+      fetch: createApiKeysHandler({ store }),
     }),
   ];
   return () => {
