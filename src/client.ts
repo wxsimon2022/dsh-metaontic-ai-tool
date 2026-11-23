@@ -34,6 +34,7 @@ const zh = {
   invalidResponse: '平台返回了无法识别的数据。',
   account: '账户信息',
   platform: '平台信息',
+  accountPlatform: '账户与平台',
   balance: '可用余额',
   usedQuota: '已用额度',
   requests: '请求次数',
@@ -137,6 +138,7 @@ const en = {
   invalidResponse: 'The platform returned an unrecognized response.',
   account: 'Account',
   platform: 'Platform',
+  accountPlatform: 'Account & platform',
   balance: 'Available balance',
   usedQuota: 'Used quota',
   requests: 'Requests',
@@ -242,7 +244,16 @@ const PANEL_CSS = `
   .mat-topbar-title{flex:1 1 220px;min-width:0}
   .mat-platform-name{margin:0;font-size:16px;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .mat-subtle{color:var(--dsw-alias-label-secondary,#67707c);font-size:11.5px;line-height:1.5}
-  .mat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:12px;margin-top:12px}
+  .mat-overview{margin-top:10px;padding:15px 16px}
+  .mat-overview .mat-card-head{margin-bottom:10px}
+  .mat-overview .mat-metric{padding:9px 10px}
+  .mat-overview .mat-metric-value{font-size:16px}
+  .mat-overview .mat-progress{margin:8px 0 5px}
+  .mat-badges{display:flex;flex-wrap:wrap;gap:6px}
+  .mat-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px;margin-top:10px}
+  .mat-facts .mat-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:7px 0}
+  .mat-facts .mat-row-label{flex:0 0 auto}
+  .mat-facts .mat-row-value{min-width:0;text-align:right}
   .mat-card-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px}
   .mat-card-title{font-size:13px;font-weight:650}
   .mat-badge{border-radius:999px;background:var(--dsw-alias-bg-layer-2,#f1f4f8);color:var(--dsw-alias-label-secondary,#67707c);padding:2px 8px;font-size:10.5px;font-weight:600}
@@ -286,7 +297,7 @@ const PANEL_CSS = `
   .mat-btn-sm{height:30px;padding:0 10px;font-size:11.5px}
   .mat-btn-danger{border-color:color-mix(in srgb,var(--dsw-alias-state-error-primary,#c62828) 28%,transparent);color:var(--dsw-alias-state-error-primary,#c62828)}
   .mat-btn-danger:hover{background:color-mix(in srgb,var(--dsw-alias-state-error-primary,#c62828) 8%,transparent)}
-  @media (max-width:620px){.mat-root{padding:20px 16px 32px}.mat-metrics{grid-template-columns:1fr}.mat-row{grid-template-columns:1fr;gap:3px}.mat-key-create{grid-template-columns:1fr}.mat-key-meta{grid-template-columns:1fr}}
+  @media (max-width:620px){.mat-root{padding:20px 16px 32px}.mat-metrics{grid-template-columns:1fr}.mat-row{grid-template-columns:1fr;gap:3px}.mat-facts{grid-template-columns:1fr}.mat-key-create{grid-template-columns:1fr}.mat-key-meta{grid-template-columns:1fr}}
 `;
 
 type SetState<T> = (value: T | ((previous: T) => T)) => void;
@@ -607,19 +618,24 @@ function createPanel(React: ReactLike, h: HFunction, t: DshTranslate) {
     ]);
   }
 
-  function AccountCard({ data }: CardProps) {
-    const { account, platform } = data;
+  function OverviewCard({ data }: CardProps) {
+    const { account, platform, fetchedAt } = data;
     const remaining = Number(account.quota) || 0;
     const used = Number(account.used_quota) || 0;
     const total = remaining + used;
     const remainingPercentage = total > 0 ? Math.min(100, Math.max(0, remaining / total * 100)) : 0;
     const progressTone = remainingPercentage <= 5 ? ' mat-progress-danger' : remainingPercentage <= 20 ? ' mat-progress-warn' : '';
     const statusActive = Number(account.status) !== 2;
-    return h('section', { className: 'mat-card' }, [
+    const unit = currency(platform);
+    const showDisplayName = Boolean(account.display_name && account.display_name !== account.username);
+    return h('section', { className: 'mat-card mat-overview' }, [
       h('div', { key: 'head', className: 'mat-card-head' }, [
-        h('div', { key: 'title', className: 'mat-card-title' }, t('account')),
-        h('span', { key: 'status', className: `mat-badge ${statusActive ? 'mat-badge-ok' : 'mat-badge-warn'}` },
-          statusActive ? t('enabled') : t('disabled')),
+        h('div', { key: 'title', className: 'mat-card-title' }, t('accountPlatform')),
+        h('div', { key: 'badges', className: 'mat-badges' }, [
+          h('span', { key: 'status', className: `mat-badge ${statusActive ? 'mat-badge-ok' : 'mat-badge-warn'}` },
+            statusActive ? t('enabled') : t('disabled')),
+          h('span', { key: 'currency', className: 'mat-badge' }, `${unit.code} ${unit.symbol}`),
+        ]),
       ]),
       h('div', { key: 'metrics', className: 'mat-metrics' }, [
         h('div', { key: 'balance', className: 'mat-metric' }, [
@@ -658,28 +674,13 @@ function createPanel(React: ReactLike, h: HFunction, t: DshTranslate) {
         quota: formatQuota(remaining, platform),
         used: formatQuota(used, platform),
       })),
-      h('div', { key: 'rows', className: 'mat-rows', style: { marginTop: 14 } }, [
+      h('div', { key: 'facts', className: 'mat-facts' }, [
         h(Row, { key: 'username', label: t('username'), value: account.username }),
-        h(Row, { key: 'display', label: t('displayName'), value: account.display_name }),
+        showDisplayName ? h(Row, { key: 'display', label: t('displayName'), value: account.display_name }) : null,
         h(Row, { key: 'group', label: t('group'), value: account.group }),
         h(Row, { key: 'role', label: t('role'), value: roleLabel(t, account.role) }),
         h(Row, { key: 'id', label: t('accountId'), value: String(account.id ?? ''), mono: true }),
-      ]),
-    ]);
-  }
-
-  function PlatformCard({ data }: CardProps) {
-    const { platform, baseUrl, fetchedAt } = data;
-    const unit = currency(platform);
-    return h('section', { className: 'mat-card' }, [
-      h('div', { key: 'head', className: 'mat-card-head' }, [
-        h('div', { key: 'title', className: 'mat-card-title' }, t('platform')),
-        h('span', { key: 'currency', className: 'mat-badge' }, `${unit.code} ${unit.symbol}`),
-      ]),
-      h('div', { key: 'rows', className: 'mat-rows' }, [
-        h(Row, { key: 'name', label: t('systemName'), value: platform.system_name }),
         h(Row, { key: 'version', label: t('version'), value: platform.version, mono: true }),
-        h(Row, { key: 'server', label: t('serverAddress'), value: platform.server_address || baseUrl, mono: true }),
         h(Row, { key: 'currency', label: t('currency'), value: unit.code }),
         h(Row, { key: 'time', label: t('fetchedAt'), value: new Date(fetchedAt).toLocaleString(), mono: true }),
       ]),
@@ -1237,10 +1238,7 @@ function createPanel(React: ReactLike, h: HFunction, t: DshTranslate) {
             ]),
             error ? h('div', { key: 'error', className: 'mat-error', role: 'alert', style: { marginBottom: 12 } }, error) : null,
             notice ? h('div', { key: 'notice', className: 'mat-notice', role: 'status', style: { marginBottom: 12 } }, notice) : null,
-            h('div', { key: 'grid', className: 'mat-grid' }, [
-              h(AccountCard, { key: 'account', data }),
-              h(PlatformCard, { key: 'platform', data }),
-            ]),
+            h(OverviewCard, { key: 'overview', data }),
             h(ApiKeysCard, { key: 'api-keys', data }),
           ])
           : h(LoginForm, {
