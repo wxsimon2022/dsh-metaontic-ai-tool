@@ -1,6 +1,6 @@
 {
   "name": "dsh-metaontic-ai-tool",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "MetaOntic AI 多模型聚合平台的 dsh 管理插件，支持访问令牌登录与平台查询。",
   "type": "module",
   "main": "./dist/index.js",
@@ -39,8 +39,7 @@
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
-    "LICENSE",
-    "README.md"
+    "LICENSE"
   ],
   "engines": {
     "node": ">=20"
@@ -63,6 +62,7 @@
     "check": "npm run typecheck && node --check tests/query.test.mjs",
     "test": "npm run build && node --test tests/*.test.mjs",
     "pack:check": "npm pack --dry-run",
+    "pack:plugin": "node scripts/pack-plugin.mjs",
     "release:gitee": "node scripts/publish-gitee.mjs",
     "prepack": "npm run build"
   },

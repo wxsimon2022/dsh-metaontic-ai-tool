@@ -35,17 +35,21 @@ npm run build     # 将 src/*.ts 编译到 dist/
 npm run check     # 类型检查并校验测试文件语法
 npm test          # 构建后运行离线接口契约测试
 npm run pack:check # 检查安装包内容
+npm run pack:plugin # 生成不含 README 的插件包到 release/
 npm pack          # 自动构建并生成安装包
 ```
 
 安装本地包：
 
 ```bash
-dsh plugin --profile desktop add ./dsh-metaontic-ai-tool-0.0.2.tgz
+dsh plugin --profile desktop add ./release/dsh-metaontic-ai-tool-0.0.3.tgz
 ```
 
 重启 Harness 后，点击左侧栏的 **MetaOntic AI**，确认平台地址并填入访问令牌。
 令牌可在 MetaOntic AI 控制台的个人安全设置中创建。
+
+插件设置页只展示插件信息，不渲染仓库 README；发布包由 `npm run pack:plugin`
+生成，并在打包后移除 `README.md`。
 
 ## 查询方式
 

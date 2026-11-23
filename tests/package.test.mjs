@@ -1,0 +1,53 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { gzipSync } from 'node:zlib';
+import { listTarGzEntries, stripReadmeFromTarGz } from '../scripts/strip-package-readme.mjs';
+
+function header(name, size) {
+  const block = Buffer.alloc(512);
+  block.write(name, 0, 100, 'utf8');
+  block.write('0000644\0', 100, 8, 'ascii');
+  block.write('0000000\0', 108, 8, 'ascii');
+  block.write('0000000\0', 116, 8, 'ascii');
+  block.write(`${size.toString(8).padStart(11, '0')}\0`, 124, 12, 'ascii');
+  block.write('00000000000\0', 136, 12, 'ascii');
+  block.write('        ', 148, 8, 'ascii');
+  block.write('0', 156, 1, 'ascii');
+  block.write('ustar\0', 257, 6, 'ascii');
+  block.write('00', 263, 2, 'ascii');
+  const checksum = [...block].reduce((sum, byte) => sum + byte, 0);
+  block.write(`${checksum.toString(8).padStart(6, '0')}\0 `, 148, 8, 'ascii');
+  return block;
+}
+
+function tarGz(entries) {
+  const blocks = [];
+  for (const [name, content] of entries) {
+    const body = Buffer.from(content);
+    blocks.push(header(name, body.length), body, Buffer.alloc((512 - body.length % 512) % 512));
+  }
+  blocks.push(Buffer.alloc(1024));
+  return gzipSync(Buffer.concat(blocks));
+}
+
+test('strips the package README without changing other entries', () => {
+  const archive = tarGz([
+    ['package/package.json', '{"name":"example"}'],
+    ['package/README.md', '# Long plugin readme'],
+    ['package/dist/client.js', 'console.log("plugin")'],
+  ]);
+
+  assert.deepEqual(listTarGzEntries(archive), [
+    'package/package.json',
+    'package/README.md',
+    'package/dist/client.js',
+  ]);
+
+  const stripped = stripReadmeFromTarGz(archive);
+  assert.equal(stripped.removed, 1);
+  assert.deepEqual(listTarGzEntries(stripped.archive), [
+    'package/package.json',
+    'package/dist/client.js',
+  ]);
+  assert.equal(stripReadmeFromTarGz(stripped.archive).removed, 0);
+});
