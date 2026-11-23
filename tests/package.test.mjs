@@ -104,3 +104,10 @@ test('keeps the upstream user agent in sync with the package version', () => {
 
   assert.ok(index.includes(agent), `missing user agent: ${agent}`);
 });
+
+test('builds GitHub release archives with the README-stripping packer', () => {
+  const workflow = readFileSync(new URL('.github/workflows/release.yml', root), 'utf8');
+
+  assert.match(workflow, /npm run pack:plugin/);
+  assert.doesNotMatch(workflow, /npm pack --pack-destination release/);
+});

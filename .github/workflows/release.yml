@@ -25,9 +25,7 @@ jobs:
       - run: npm run pack:check
 
       - name: Pack
-        run: |
-          mkdir -p release
-          npm pack --pack-destination release
+        run: npm run pack:plugin
 
       - name: Publish GitHub release
         env:
