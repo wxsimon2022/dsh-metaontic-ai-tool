@@ -145,6 +145,12 @@ test('keeps the model plaza independently scrollable', async () => {
   assert.match(code, /\.mat-model-list\{[^}]*touch-action:pan-y/);
 });
 
+test('keeps the dashboard shell tall enough to scroll', async () => {
+  const code = await readFile(new URL('../dist/client.js', import.meta.url), 'utf8');
+  assert.match(code, /\.mat-root\{[^}]*height:100%;max-height:100vh;overflow-y:auto/);
+  assert.match(code, /\.mat-root\{[^}]*overscroll-behavior:contain/);
+});
+
 test('shows the registration link only while the access token is empty', async () => {
   const code = await readFile(new URL('../dist/client.js', import.meta.url), 'utf8');
   let registration;
