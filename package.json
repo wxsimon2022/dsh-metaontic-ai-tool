@@ -1,6 +1,6 @@
 {
   "name": "dsh-metaontic-ai-tool",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "MetaOntic AI 多模型聚合平台的 DeepSeek Harness 管理插件：访问令牌登录、注册入口、余额与用量查询、API Key 管理。",
   "type": "module",
   "main": "./dist/index.js",

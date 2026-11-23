@@ -53,6 +53,7 @@ const zh = {
   rawQuota: '余额 {quota} · 累计已用 {used}',
   apiKeys: 'API Key 管理',
   apiKeysHint: '为应用创建和管理访问密钥。完整密钥仅在点击显示时读取，不会随列表下发。',
+  apiKeyListTitle: 'Key 列表（{count}）',
   apiKeyRefresh: '刷新',
   apiKeyRefreshing: '正在刷新…',
   apiKeyNew: '新建 API Key',
@@ -155,6 +156,7 @@ const en = {
   rawQuota: 'Balance {quota} · Cumulative used {used}',
   apiKeys: 'API Key management',
   apiKeysHint: 'Create and manage access keys for applications. Full keys are read only when explicitly shown and are never included in the list response.',
+  apiKeyListTitle: 'Key list ({count})',
   apiKeyRefresh: 'Refresh',
   apiKeyRefreshing: 'Refreshing…',
   apiKeyNew: 'New API Key',
@@ -271,6 +273,7 @@ const PANEL_CSS = `
   .mat-key-check{display:flex;align-items:center;gap:7px;min-height:38px;font-size:12px;font-weight:600}
   .mat-key-create-actions{display:flex;flex-wrap:wrap;gap:8px;grid-column:1/-1;justify-content:flex-end}
   .mat-key-list{display:flex;flex-direction:column;gap:9px}
+  .mat-key-list-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 9px}
   .mat-key-item{border:1px solid var(--dsw-alias-border-l1,#e4e8ee);border-radius:11px;padding:12px;background:var(--dsw-alias-bg-layer-1,#fff)}
   .mat-key-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:9px}
   .mat-key-name{min-width:0;flex:1 1 180px;font-size:13px;font-weight:650;overflow-wrap:anywhere}
@@ -969,6 +972,72 @@ function createPanel(React: ReactLike, h: HFunction, t: DshTranslate) {
       ])
       : null;
 
+    const keyList = loading && keys.length === 0
+      ? h('p', { key: 'loading', className: 'mat-hint' }, t('apiKeyRefreshing'))
+      : keys.length === 0
+      ? h('p', { key: 'empty', className: 'mat-hint' }, t('apiKeyNone'))
+      : h('div', { key: 'list', className: 'mat-key-list' }, keys.map(apiKey => {
+        const id = Number(apiKey.id);
+        const keyText = revealed[String(id)];
+        const enabled = Number(apiKey.status) === 1;
+        return h('div', { key: String(apiKey.id), className: 'mat-key-item' }, [
+          h('div', { key: 'head', className: 'mat-key-head' }, [
+            h('div', { key: 'name', className: 'mat-key-name' }, apiKey.name || t('empty')),
+            h('span', { key: 'status', className: `mat-badge ${apiKeyStatusTone(apiKey.status)}` },
+              apiKeyStatusLabel(t, apiKey.status)),
+            apiKey.group ? h('span', { key: 'group', className: 'mat-badge' }, apiKey.group) : null,
+          ]),
+          h('code', {
+            key: 'secret',
+            className: `mat-key-secret${keyText ? '' : ' mat-key-secret-empty'}`,
+          }, keyText || t('apiKeyHidden')),
+          h('div', { key: 'meta', className: 'mat-key-meta' }, [
+            h('div', { key: 'quota' }, [
+              h('div', { key: 'label', className: 'mat-key-meta-label' }, t('apiKeyQuotaLabel')),
+              h('div', { key: 'value', className: 'mat-key-meta-value' },
+                apiKey.unlimited_quota ? t('unlimited') : formatQuota(apiKey.remain_quota, data.platform)),
+            ]),
+            h('div', { key: 'used' }, [
+              h('div', { key: 'label', className: 'mat-key-meta-label' }, t('apiKeyUsedLabel')),
+              h('div', { key: 'value', className: 'mat-key-meta-value' }, formatQuota(apiKey.used_quota, data.platform)),
+            ]),
+            h('div', { key: 'expires' }, [
+              h('div', { key: 'label', className: 'mat-key-meta-label' }, t('apiKeyExpires')),
+              h('div', { key: 'value', className: 'mat-key-meta-value' }, apiKeyExpiryLabel(t, apiKey.expired_time)),
+            ]),
+          ]),
+          h('div', { key: 'actions', className: 'mat-key-actions' }, [
+            h('button', {
+              key: 'reveal',
+              type: 'button',
+              className: 'mat-btn mat-btn-sm',
+              onClick: () => void toggleReveal(apiKey),
+              disabled: busyId === id,
+            }, keyText ? t('apiKeyHide') : t('apiKeyShow')),
+            keyText ? h('button', {
+              key: 'copy',
+              type: 'button',
+              className: 'mat-btn mat-btn-sm',
+              onClick: () => void copyKey(apiKey),
+            }, t('apiKeyCopy')) : null,
+            h('button', {
+              key: 'toggle',
+              type: 'button',
+              className: 'mat-btn mat-btn-sm',
+              onClick: () => void toggleStatus(apiKey),
+              disabled: busyId === id,
+            }, enabled ? t('apiKeyDisable') : t('apiKeyEnable')),
+            h('button', {
+              key: 'delete',
+              type: 'button',
+              className: 'mat-btn mat-btn-sm mat-btn-danger',
+              onClick: () => void deleteKey(apiKey),
+              disabled: busyId === id,
+            }, t('apiKeyDelete')),
+          ]),
+        ]);
+      }));
+
     return h('section', { className: 'mat-card mat-api-keys' }, [
       h('div', { key: 'head', className: 'mat-card-head' }, [
         h('div', { key: 'copy', className: 'mat-card-head-copy' }, [
@@ -997,72 +1066,12 @@ function createPanel(React: ReactLike, h: HFunction, t: DshTranslate) {
       ]),
       error ? h('div', { key: 'error', className: 'mat-error', role: 'alert', style: { marginBottom: 10 } }, error) : null,
       notice ? h('div', { key: 'notice', className: 'mat-notice', role: 'status', style: { marginBottom: 10 } }, notice) : null,
+      h('div', { key: 'list-head', className: 'mat-key-list-head' }, [
+        h('div', { key: 'title', className: 'mat-card-title' }, t('apiKeyListTitle', { count: keys.length })),
+        h('span', { key: 'count', className: 'mat-badge' }, String(keys.length)),
+      ]),
+      keyList,
       createForm,
-      loading && keys.length === 0
-        ? h('p', { key: 'loading', className: 'mat-hint' }, t('apiKeyRefreshing'))
-        : keys.length === 0
-        ? h('p', { key: 'empty', className: 'mat-hint' }, t('apiKeyNone'))
-        : h('div', { key: 'list', className: 'mat-key-list' }, keys.map(apiKey => {
-          const id = Number(apiKey.id);
-          const keyText = revealed[String(id)];
-          const enabled = Number(apiKey.status) === 1;
-          return h('div', { key: String(apiKey.id), className: 'mat-key-item' }, [
-            h('div', { key: 'head', className: 'mat-key-head' }, [
-              h('div', { key: 'name', className: 'mat-key-name' }, apiKey.name || t('empty')),
-              h('span', { key: 'status', className: `mat-badge ${apiKeyStatusTone(apiKey.status)}` },
-                apiKeyStatusLabel(t, apiKey.status)),
-              apiKey.group ? h('span', { key: 'group', className: 'mat-badge' }, apiKey.group) : null,
-            ]),
-            h('code', {
-              key: 'secret',
-              className: `mat-key-secret${keyText ? '' : ' mat-key-secret-empty'}`,
-            }, keyText || t('apiKeyHidden')),
-            h('div', { key: 'meta', className: 'mat-key-meta' }, [
-              h('div', { key: 'quota' }, [
-                h('div', { key: 'label', className: 'mat-key-meta-label' }, t('apiKeyQuotaLabel')),
-                h('div', { key: 'value', className: 'mat-key-meta-value' },
-                  apiKey.unlimited_quota ? t('unlimited') : formatQuota(apiKey.remain_quota, data.platform)),
-              ]),
-              h('div', { key: 'used' }, [
-                h('div', { key: 'label', className: 'mat-key-meta-label' }, t('apiKeyUsedLabel')),
-                h('div', { key: 'value', className: 'mat-key-meta-value' }, formatQuota(apiKey.used_quota, data.platform)),
-              ]),
-              h('div', { key: 'expires' }, [
-                h('div', { key: 'label', className: 'mat-key-meta-label' }, t('apiKeyExpires')),
-                h('div', { key: 'value', className: 'mat-key-meta-value' }, apiKeyExpiryLabel(t, apiKey.expired_time)),
-              ]),
-            ]),
-            h('div', { key: 'actions', className: 'mat-key-actions' }, [
-              h('button', {
-                key: 'reveal',
-                type: 'button',
-                className: 'mat-btn mat-btn-sm',
-                onClick: () => void toggleReveal(apiKey),
-                disabled: busyId === id,
-              }, keyText ? t('apiKeyHide') : t('apiKeyShow')),
-              keyText ? h('button', {
-                key: 'copy',
-                type: 'button',
-                className: 'mat-btn mat-btn-sm',
-                onClick: () => void copyKey(apiKey),
-              }, t('apiKeyCopy')) : null,
-              h('button', {
-                key: 'toggle',
-                type: 'button',
-                className: 'mat-btn mat-btn-sm',
-                onClick: () => void toggleStatus(apiKey),
-                disabled: busyId === id,
-              }, enabled ? t('apiKeyDisable') : t('apiKeyEnable')),
-              h('button', {
-                key: 'delete',
-                type: 'button',
-                className: 'mat-btn mat-btn-sm mat-btn-danger',
-                onClick: () => void deleteKey(apiKey),
-                disabled: busyId === id,
-              }, t('apiKeyDelete')),
-            ]),
-          ]);
-        })),
     ]);
   }
 

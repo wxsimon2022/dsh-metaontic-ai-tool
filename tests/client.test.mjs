@@ -400,6 +400,10 @@ test('lists API keys masked and reveals one only on request', async () => {
   await new Promise(resolve => setImmediate(resolve));
   let nodes = render();
 
+  const listHeadIndex = nodes.findIndex(node => node.props?.className === 'mat-key-list-head');
+  const keyItemIndex = nodes.findIndex(node => node.props?.className === 'mat-key-item');
+  assert.ok(listHeadIndex >= 0);
+  assert.ok(keyItemIndex > listHeadIndex);
   assert.ok(nodes.some(node => node.props?.className === 'mat-key-item'));
   assert.ok(nodes.some(node => node.props?.children?.[0] === 'dsh-desktop'));
   assert.equal(JSON.stringify(nodes).includes('sk-explicit-reveal'), false);
