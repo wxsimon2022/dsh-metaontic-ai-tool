@@ -2,11 +2,12 @@
 
 ## Project Structure & Module Organization
 
-This repository is the `dsh` Host and browser plugin for the MetaOntic AI multi-model aggregation platform, built on open-source New API. TypeScript sources live in `src/`: `index.ts` contains the login/query routes, validation, upstream requests, sanitized mapping, and profile-local login storage; `client.ts` registers the sidebar icon and main panel. `src/types/dsh.d.ts` declares the browser-side host APIs. `tsc` emits runtime files to `dist/`; `package.json` exports those files. `cordis.patch.yml` mounts the bundle, and metadata lives in `locale/`.
+This repository is the `dsh` Host and browser plugin for the MetaOntic AI multi-model aggregation platform, built on open-source New API. Host code is split under `src/host/` into constants, shared types, HTTP utilities, platform queries, login storage, API Key operations, shared payment signing, subscription operations, recharge operations, and route handlers; `index.ts` only exposes the public API and registers routes. Browser code is split under `src/client/` into dictionaries, styles, runtime types/helpers, shell, pages, dashboard state, and the loader entry `client.ts`. `src/types/dsh.d.ts` declares browser-side host APIs. `tsc` emits Host ESM files to `dist/`, while esbuild bundles the browser entry into a single IIFE at `dist/client.js`; `package.json` exports those files. `cordis.patch.yml` mounts the bundle, and metadata lives in `locale/`.
 
 ## Build, Test, and Development Commands
 
-- `npm run build` compiles `src/*.ts` to `dist/` with `tsc`.
+- `npm run build` compiles Host modules to `dist/` and bundles `src/client.ts` to `dist/client.js`.
+- `npm run build:host` and `npm run build:client` run the two build stages separately.
 - `npm run typecheck` checks types without emitting files.
 - `npm run check` runs type checking and validates test syntax.
 - `npm test` builds, then runs the offline `node:test` suite against `dist/`.

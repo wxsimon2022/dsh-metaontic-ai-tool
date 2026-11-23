@@ -3,6 +3,83 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import vm from 'node:vm';
 
+function createReactHarness() {
+  const states = new Map();
+  const startedEffects = new Set();
+  const effects = [];
+  const componentIds = new WeakMap();
+  let nextComponentId = 1;
+  let currentComponent = null;
+  let cursor = 0;
+
+  function componentId(component) {
+    if (!component || (typeof component !== 'function' && typeof component !== 'object')) return 'root';
+    let id = componentIds.get(component);
+    if (!id) {
+      id = nextComponentId++;
+      componentIds.set(component, id);
+    }
+    return String(id);
+  }
+
+  function hookKey(slot) {
+    return `${componentId(currentComponent)}:${slot}`;
+  }
+
+  const React = {
+    Fragment: Symbol('Fragment'),
+    createElement(type, props, ...children) {
+      return { type, props: { ...(props || {}), children: children.flat(Infinity) } };
+    },
+    useState(initialValue) {
+      const key = hookKey(cursor++);
+      if (!states.has(key)) states.set(key, initialValue);
+      return [states.get(key), value => {
+        states.set(key, typeof value === 'function' ? value(states.get(key)) : value);
+      }];
+    },
+    useEffect(effect) {
+      const key = hookKey(cursor++);
+      if (!startedEffects.has(key)) {
+        startedEffects.add(key);
+        effects.push(effect);
+      }
+    },
+  };
+
+  function flatten(node, result = []) {
+    if (Array.isArray(node)) {
+      for (const child of node) flatten(child, result);
+      return result;
+    }
+    if (!node || typeof node !== 'object') return result;
+    if (typeof node.type === 'function') {
+      const previousComponent = currentComponent;
+      const previousCursor = cursor;
+      currentComponent = node.type;
+      cursor = 0;
+      const rendered = node.type(node.props);
+      currentComponent = previousComponent;
+      cursor = previousCursor;
+      return flatten(rendered, result);
+    }
+    if (node.type === React.Fragment) return flatten(node.props?.children, result);
+    result.push(node);
+    flatten(node.props?.children, result);
+    return result;
+  }
+
+  function render(root) {
+    cursor = 0;
+    currentComponent = root;
+    const tree = root();
+    while (effects.length) effects.shift()();
+    return flatten(tree);
+  }
+
+  return { React, flatten, render };
+}
+
 test('loads the compiled browser client as a classic script', async () => {
   const code = await readFile(new URL('../dist/client.js', import.meta.url), 'utf8');
   assert.doesNotMatch(code, /^\s*export\s/m);
@@ -56,6 +133,9 @@ test('keeps the API key list independently scrollable', async () => {
   const code = await readFile(new URL('../dist/client.js', import.meta.url), 'utf8');
   assert.match(code, /\.mat-key-list\{[^}]*max-height:[^;]+;[^}]*overflow-y:auto/);
   assert.match(code, /\.mat-key-item\{[^}]*flex:0 0 auto/);
+  assert.match(code, /\.mat-key-item\{[^}]*padding:8px 10px/);
+  assert.match(code, /\.mat-key-meta\{[^}]*display:flex/);
+  assert.match(code, /\.mat-key-actions\{[^}]*margin-top:6px/);
 });
 
 test('shows the registration link only while the access token is empty', async () => {
@@ -74,43 +154,7 @@ test('shows the registration link only while the access token is empty', async (
   });
   vm.runInNewContext(code, { window, console, URL, setTimeout, clearTimeout, fetch });
 
-  const states = [];
-  const effects = [];
-  const startedEffects = new Set();
-  let cursor = 0;
-  const React = {
-    Fragment: Symbol('Fragment'),
-    createElement(type, props, ...children) {
-      return { type, props: { ...(props || {}), children: children.flat(Infinity) } };
-    },
-    useState(initialValue) {
-      const slot = cursor++;
-      if (!(slot in states)) states[slot] = initialValue;
-      return [states[slot], value => {
-        states[slot] = typeof value === 'function' ? value(states[slot]) : value;
-      }];
-    },
-    useEffect(effect) {
-      const slot = cursor++;
-      if (!startedEffects.has(slot)) {
-        startedEffects.add(slot);
-        effects.push(effect);
-      }
-    },
-  };
-
-  function flatten(node, result = []) {
-    if (Array.isArray(node)) {
-      for (const child of node) flatten(child, result);
-      return result;
-    }
-    if (!node || typeof node !== 'object') return result;
-    if (typeof node.type === 'function') return flatten(node.type(node.props), result);
-    if (node.type === React.Fragment) return flatten(node.props?.children, result);
-    result.push(node);
-    flatten(node.props?.children, result);
-    return result;
-  }
+  const { React, render: renderTree } = createReactHarness();
 
   const client = registration.factory(() => React);
   let Dashboard;
@@ -135,10 +179,7 @@ test('shows the registration link only while the access token is empty', async (
   });
 
   function render() {
-    cursor = 0;
-    const tree = Dashboard();
-    while (effects.length) effects.shift()();
-    return flatten(tree);
+    return renderTree(Dashboard);
   }
 
   render();
@@ -190,43 +231,7 @@ test('shows remaining quota with a matching progress width', async () => {
   });
   vm.runInNewContext(code, { window, console, URL, setTimeout, clearTimeout, fetch });
 
-  const states = [];
-  const effects = [];
-  const startedEffects = new Set();
-  let cursor = 0;
-  const React = {
-    Fragment: Symbol('Fragment'),
-    createElement(type, props, ...children) {
-      return { type, props: { ...(props || {}), children: children.flat(Infinity) } };
-    },
-    useState(initialValue) {
-      const slot = cursor++;
-      if (!(slot in states)) states[slot] = initialValue;
-      return [states[slot], value => {
-        states[slot] = typeof value === 'function' ? value(states[slot]) : value;
-      }];
-    },
-    useEffect(effect) {
-      const slot = cursor++;
-      if (!startedEffects.has(slot)) {
-        startedEffects.add(slot);
-        effects.push(effect);
-      }
-    },
-  };
-
-  function flatten(node, result = []) {
-    if (Array.isArray(node)) {
-      for (const child of node) flatten(child, result);
-      return result;
-    }
-    if (!node || typeof node !== 'object') return result;
-    if (typeof node.type === 'function') return flatten(node.type(node.props), result);
-    if (node.type === React.Fragment) return flatten(node.props?.children, result);
-    result.push(node);
-    flatten(node.props?.children, result);
-    return result;
-  }
+  const { React, render: renderTree } = createReactHarness();
 
   const client = registration.factory(() => React);
   let Dashboard;
@@ -251,10 +256,7 @@ test('shows remaining quota with a matching progress width', async () => {
   });
 
   function render() {
-    cursor = 0;
-    const tree = Dashboard();
-    while (effects.length) effects.shift()();
-    return flatten(tree);
+    return renderTree(Dashboard);
   }
 
   render();
@@ -336,43 +338,7 @@ test('lists API keys masked and reveals one only on request', async () => {
   };
   vm.runInNewContext(code, { window, console, URL, setTimeout, clearTimeout, fetch, navigator: {} });
 
-  const states = [];
-  const effects = [];
-  const startedEffects = new Set();
-  let cursor = 0;
-  const React = {
-    Fragment: Symbol('Fragment'),
-    createElement(type, props, ...children) {
-      return { type, props: { ...(props || {}), children: children.flat(Infinity) } };
-    },
-    useState(initialValue) {
-      const slot = cursor++;
-      if (!(slot in states)) states[slot] = initialValue;
-      return [states[slot], value => {
-        states[slot] = typeof value === 'function' ? value(states[slot]) : value;
-      }];
-    },
-    useEffect(effect) {
-      const slot = cursor++;
-      if (!startedEffects.has(slot)) {
-        startedEffects.add(slot);
-        effects.push(effect);
-      }
-    },
-  };
-
-  function flatten(node, result = []) {
-    if (Array.isArray(node)) {
-      for (const child of node) flatten(child, result);
-      return result;
-    }
-    if (!node || typeof node !== 'object') return result;
-    if (typeof node.type === 'function') return flatten(node.type(node.props), result);
-    if (node.type === React.Fragment) return flatten(node.props?.children, result);
-    result.push(node);
-    flatten(node.props?.children, result);
-    return result;
-  }
+  const { React, render: renderTree } = createReactHarness();
 
   const client = registration.factory(() => React);
   let Dashboard;
@@ -397,10 +363,7 @@ test('lists API keys masked and reveals one only on request', async () => {
   });
 
   function render() {
-    cursor = 0;
-    const tree = Dashboard();
-    while (effects.length) effects.shift()();
-    return flatten(tree);
+    return renderTree(Dashboard);
   }
 
   render();
@@ -411,12 +374,24 @@ test('lists API keys masked and reveals one only on request', async () => {
   await new Promise(resolve => setImmediate(resolve));
   let nodes = render();
 
+  assert.ok(nodes.some(node => node.props?.className === 'mat-card mat-overview'));
+  assert.equal(nodes.some(node => node.props?.className === 'mat-key-item'), false);
+  const apiKeysTab = nodes.find(node => node.type === 'button' && node.props?.children?.[0] === 'apiKeys');
+  assert.ok(apiKeysTab);
+  apiKeysTab.props.onClick();
+  render();
+  await new Promise(resolve => setImmediate(resolve));
+  render();
+  await new Promise(resolve => setImmediate(resolve));
+  nodes = render();
+
   const listHeadIndex = nodes.findIndex(node => node.props?.className === 'mat-key-list-head');
   const keyItemIndex = nodes.findIndex(node => node.props?.className === 'mat-key-item');
   assert.ok(listHeadIndex >= 0);
   assert.ok(keyItemIndex > listHeadIndex);
   assert.ok(nodes.some(node => node.props?.className === 'mat-key-item'));
   assert.ok(nodes.some(node => node.props?.children?.[0] === 'dsh-desktop'));
+  assert.equal(nodes.some(node => node.type === 'code' && String(node.props?.className || '').startsWith('mat-key-secret')), false);
   assert.equal(JSON.stringify(nodes).includes('sk-explicit-reveal'), false);
 
   const reveal = nodes.find(node => node.type === 'button' && node.props?.children?.[0] === 'apiKeyShow');
@@ -426,4 +401,293 @@ test('lists API keys masked and reveals one only on request', async () => {
   nodes = render();
   const secret = nodes.find(node => node.type === 'code' && String(node.props?.className || '').startsWith('mat-key-secret'));
   assert.equal(secret?.props.children[0], 'sk-explicit-reveal');
+
+  const newKey = nodes.find(node => node.type === 'button' && node.props?.children?.[0] === 'apiKeyNew');
+  assert.ok(newKey);
+  newKey.props.onClick();
+  nodes = render();
+  const dialog = nodes.find(node => node.type === 'form' && node.props?.role === 'dialog');
+  assert.ok(dialog);
+  assert.equal(dialog.props['aria-modal'], 'true');
+  assert.match(String(dialog.props.className), /mat-modal/);
+  assert.ok(nodes.some(node => node.props?.className === 'mat-modal-backdrop'));
+  const closeDialog = nodes.find(node => node.type === 'button' && node.props?.['aria-label'] === 'apiKeyCancel');
+  assert.ok(closeDialog);
+  closeDialog.props.onClick();
+  nodes = render();
+  assert.equal(nodes.some(node => node.props?.role === 'dialog'), false);
+});
+
+test('keeps recharge on the overview page and shows a signed payment link', async () => {
+  const code = await readFile(new URL('../dist/client.js', import.meta.url), 'utf8');
+  let registration;
+  const window = {
+    __ModuleLoader__: {
+      load(options) {
+        registration = options;
+      },
+    },
+  };
+  let capturedPayment;
+  const fetch = async (url, init = {}) => {
+    const target = String(url);
+    const method = String(init.method || 'GET').toUpperCase();
+    if (target.endsWith('/api/dsh-metaontic-ai-tool.session')) {
+      return {
+        ok: true,
+        json: async () => ({
+          ok: true,
+          data: {
+            authenticated: true,
+            baseUrl: 'https://ai.bileego.com',
+            fetchedAt: '2026-11-23T08:00:00.000Z',
+            platform: { quota_per_unit: 500000, quota_display_type: 'CNY', usd_exchange_rate: 7.3 },
+            account: { quota: 958524, used_quota: 66781203, status: 1 },
+          },
+        }),
+      };
+    }
+    if (target.endsWith('/api/dsh-metaontic-ai-tool.topup') && method === 'GET') {
+      return {
+        ok: true,
+        json: async () => ({
+          ok: true,
+          data: {
+            amountOptions: [10, 20, 50],
+            minTopup: 1,
+            onlineTopupEnabled: true,
+            paymentMethods: [{ name: '微信', type: 'wxpay' }],
+          },
+        }),
+      };
+    }
+    if (target.endsWith('/api/dsh-metaontic-ai-tool.topup') && method === 'POST') {
+      capturedPayment = JSON.parse(init.body);
+      return {
+        ok: true,
+        json: async () => ({
+          ok: true,
+          data: {
+            amount: 20,
+            paymentMethod: 'wxpay',
+            payMoney: '14.60',
+            outTradeNo: 'USR6NOtclRqn1795355599',
+            payUrl: 'https://pay.example.com/submit.php?sign=abc123&type=wxpay',
+          },
+        }),
+      };
+    }
+    throw new Error(`unexpected request: ${method} ${target}`);
+  };
+  vm.runInNewContext(code, { window, console, URL, setTimeout, clearTimeout, fetch });
+
+  const { React, render: renderTree } = createReactHarness();
+
+  const client = registration.factory(() => React);
+  let Dashboard;
+  client.apply({
+    effect(callback) {
+      callback();
+    },
+    locale: {
+      register() {},
+      bind() {
+        return key => key;
+      },
+    },
+    slots: {
+      inject(_slot, callback) {
+        callback();
+      },
+      register(definition, component) {
+        if (definition.name === 'main') Dashboard = component;
+      },
+    },
+  });
+
+  function render() {
+    return renderTree(Dashboard);
+  }
+
+  render();
+  await new Promise(resolve => setImmediate(resolve));
+  let nodes = render();
+  await new Promise(resolve => setImmediate(resolve));
+  nodes = render();
+  await new Promise(resolve => setImmediate(resolve));
+  nodes = render();
+  assert.ok(nodes.some(node => node.props?.className === 'mat-card mat-overview'));
+  assert.ok(nodes.some(node => node.props?.className === 'mat-card mat-topup'));
+  assert.equal(nodes.some(node => node.type === 'button' && node.props?.children?.[0] === 'topup'), false);
+  assert.equal(nodes.some(node => node.props?.className === 'mat-key-item'), false);
+  const amountInput = nodes.find(node => node.type === 'input' && node.props?.type === 'number');
+  assert.ok(amountInput);
+  amountInput.props.onChange({ target: { value: '20' } });
+  nodes = render();
+  const form = nodes.find(node => node.type === 'form' && node.props?.className === 'mat-topup-grid');
+  assert.ok(form);
+  await form.props.onSubmit({ preventDefault() {} });
+  await new Promise(resolve => setImmediate(resolve));
+  nodes = render();
+
+  assert.deepEqual(capturedPayment, { amount: 20, paymentMethod: 'wxpay' });
+  assert.ok(nodes.some(node => node.props?.className === 'mat-notice' && node.props.children?.[0] === 'topupCreated'));
+  const payLink = nodes.find(node => node.type === 'a' && String(node.props?.className || '').includes('mat-btn-primary'));
+  assert.equal(payLink?.props.href, 'https://pay.example.com/submit.php?sign=abc123&type=wxpay');
+  assert.equal(payLink?.props.target, '_blank');
+  assert.equal(payLink?.props.rel, 'noopener noreferrer');
+});
+
+test('shows subscriptions on their own page and creates a signed subscription link', async () => {
+  const code = await readFile(new URL('../dist/client.js', import.meta.url), 'utf8');
+  let registration;
+  const window = {
+    __ModuleLoader__: {
+      load(options) {
+        registration = options;
+      },
+    },
+  };
+  let capturedPayment;
+  const fetch = async (url, init = {}) => {
+    const target = String(url);
+    const method = String(init.method || 'GET').toUpperCase();
+    if (target.endsWith('/api/dsh-metaontic-ai-tool.session')) {
+      return {
+        ok: true,
+        json: async () => ({
+          ok: true,
+          data: {
+            authenticated: true,
+            baseUrl: 'https://ai.bileego.com',
+            fetchedAt: '2026-11-23T08:00:00.000Z',
+            platform: { quota_per_unit: 500000, quota_display_type: 'CNY', usd_exchange_rate: 7.3 },
+            account: { quota: 958524, used_quota: 66781203, status: 1 },
+          },
+        }),
+      };
+    }
+    if (target.endsWith('/api/dsh-metaontic-ai-tool.subscription') && method === 'GET') {
+      return {
+        ok: true,
+        json: async () => ({
+          ok: true,
+          data: {
+            plans: [{
+              id: 1,
+              title: '短视频生成套餐',
+              subtitle: '购买即送 88 折优惠',
+              priceAmount: 99,
+              currency: 'USD',
+              durationUnit: 'month',
+              durationValue: 1,
+              customSeconds: 0,
+              quotaResetPeriod: 'never',
+              quotaResetCustomSeconds: 0,
+              sortOrder: 0,
+              allowBalancePay: true,
+              allowWalletOverflow: true,
+              maxPurchasePerUser: 1,
+              upgradeGroup: 'vip',
+              downgradeGroup: 'default',
+              totalQuota: 6780822,
+            }],
+            subscriptions: [{
+              id: 9,
+              planId: 1,
+              planTitle: '短视频生成套餐',
+              status: 'active',
+              source: 'epay',
+              startTime: 1790000000,
+              endTime: 1792592000,
+              amountTotal: 6780822,
+              amountUsed: 780822,
+              nextResetTime: 0,
+            }],
+            allSubscriptions: [],
+            paymentMethods: [{ name: '微信', type: 'wxpay' }],
+            onlinePaymentEnabled: true,
+          },
+        }),
+      };
+    }
+    if (target.endsWith('/api/dsh-metaontic-ai-tool.subscription') && method === 'POST') {
+      capturedPayment = JSON.parse(init.body);
+      return {
+        ok: true,
+        json: async () => ({
+          ok: true,
+          data: {
+            planId: 1,
+            paymentMethod: 'wxpay',
+            payMoney: '719.28',
+            outTradeNo: 'SUB6NO1795355599',
+            payUrl: 'https://pay.example.com/submit.php?sign=sub123&type=wxpay',
+          },
+        }),
+      };
+    }
+    throw new Error(`unexpected request: ${method} ${target}`);
+  };
+  vm.runInNewContext(code, { window, console, URL, setTimeout, clearTimeout, fetch });
+
+  const { React, render: renderTree } = createReactHarness();
+
+  const client = registration.factory(() => React);
+  let Dashboard;
+  client.apply({
+    effect(callback) {
+      callback();
+    },
+    locale: {
+      register() {},
+      bind() {
+        return key => key;
+      },
+    },
+    slots: {
+      inject(_slot, callback) {
+        callback();
+      },
+      register(definition, component) {
+        if (definition.name === 'main') Dashboard = component;
+      },
+    },
+  });
+
+  function render() {
+    return renderTree(Dashboard);
+  }
+
+  render();
+  await new Promise(resolve => setImmediate(resolve));
+  let nodes = render();
+  assert.ok(nodes.some(node => node.props?.className === 'mat-card mat-overview'));
+  const subscriptionTab = nodes.find(node => node.type === 'button' && node.props?.children?.[0] === 'subscription');
+  assert.ok(subscriptionTab);
+  subscriptionTab.props.onClick();
+  render();
+  await new Promise(resolve => setImmediate(resolve));
+  render();
+  await new Promise(resolve => setImmediate(resolve));
+  nodes = render();
+
+  assert.ok(nodes.some(node => node.props?.className === 'mat-card mat-subscription'));
+  assert.ok(nodes.some(node => node.props?.className === 'mat-sub-plan mat-sub-plan-active'));
+  assert.ok(nodes.some(node => node.props?.className === 'mat-sub-current'));
+  assert.ok(nodes.some(node => node.props?.children?.[0] === '短视频生成套餐'));
+  assert.equal(nodes.some(node => node.props?.className === 'mat-key-item'), false);
+
+  const form = nodes.find(node => node.type === 'form' && node.props?.className === 'mat-sub-pay');
+  assert.ok(form);
+  await form.props.onSubmit({ preventDefault() {} });
+  await new Promise(resolve => setImmediate(resolve));
+  nodes = render();
+
+  assert.deepEqual(capturedPayment, { planId: 1, paymentMethod: 'wxpay' });
+  assert.ok(nodes.some(node => node.props?.className === 'mat-notice' && node.props.children?.[0] === 'subscriptionPaymentCreated'));
+  const payLink = nodes.find(node => node.type === 'a' && String(node.props?.className || '').includes('mat-btn-primary'));
+  assert.equal(payLink?.props.href, 'https://pay.example.com/submit.php?sign=sub123&type=wxpay');
+  assert.equal(payLink?.props.target, '_blank');
+  assert.equal(payLink?.props.rel, 'noopener noreferrer');
 });

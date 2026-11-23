@@ -69,6 +69,7 @@ test('publishes searchable package metadata without the repository README', () =
     'new-api',
     'model-aggregation',
     'api-key-management',
+    'subscription-management',
     'balance-query',
     'usage-query',
   ]) {
@@ -99,10 +100,10 @@ test('keeps packed archives out of the repository root', () => {
 });
 
 test('keeps the upstream user agent in sync with the package version', () => {
-  const index = readFileSync(new URL('src/index.ts', root), 'utf8');
+  const constants = readFileSync(new URL('src/host/constants.ts', root), 'utf8');
   const agent = `dsh-metaontic-ai-tool/${pkg.version}`;
 
-  assert.ok(index.includes(agent), `missing user agent: ${agent}`);
+  assert.ok(constants.includes(agent), `missing user agent: ${agent}`);
 });
 
 test('builds GitHub release archives with the README-stripping packer', () => {

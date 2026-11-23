@@ -10,7 +10,13 @@ import {
   createLoginStore,
   createQueryHandler,
   createSessionHandler,
+  createSubscriptionHandler,
+  createSubscriptionPayment,
+  createTopup,
+  createTopupHandler,
   deleteApiKey,
+  getTopupInfo,
+  getSubscriptionInfo,
   listApiKeys,
   normalizeAccessToken,
   normalizeBaseUrl,
@@ -324,9 +330,300 @@ test('updates, deletes and explicitly reveals API keys', async () => {
   ]);
 });
 
+test('adds the sk- prefix only when an API key does not already have it', async () => {
+  let responseKey = 'explicit-reveal';
+  const keyFetch = async () => jsonResponse({ success: true, data: { key: responseKey } });
+  const common = {
+    baseUrl: 'https://example.com/',
+    accessToken: 'saved-test-token',
+    fetchImpl: keyFetch,
+  };
+
+  assert.deepEqual(await revealApiKey({ ...common, id: 60 }), { id: 60, key: 'sk-explicit-reveal' });
+  responseKey = 'sk-already-prefixed';
+  assert.deepEqual(await revealApiKey({ ...common, id: 60 }), { id: 60, key: 'sk-already-prefixed' });
+});
+
+test('loads approved topup configuration fields', async () => {
+  const requests = [];
+  const topupFetch = async (url, init) => {
+    const parsed = new URL(url);
+    requests.push({ path: parsed.pathname, method: init.method, authorization: init.headers.authorization });
+    return jsonResponse({
+      success: true,
+      data: {
+        amount_options: [10, '20', 20, 0, -5, 'bad', 100],
+        min_topup: 1,
+        enable_online_topup: true,
+        pay_methods: [
+          { name: '微信', type: 'wxpay', secret: 'must-not-leak' },
+          { name: '无效', type: 'bad type' },
+          { name: '微信重复', type: 'wxpay' },
+        ],
+        payment_compliance_confirmed: true,
+      },
+    });
+  };
+
+  const result = await getTopupInfo({
+    baseUrl: 'https://example.com/',
+    accessToken: 'saved-test-token',
+    fetchImpl: topupFetch,
+  });
+
+  assert.deepEqual(result, {
+    amountOptions: [10, 20, 100],
+    minTopup: 1,
+    onlineTopupEnabled: true,
+    paymentMethods: [{ name: '微信', type: 'wxpay' }],
+  });
+  assert.deepEqual(requests, [{
+    path: '/api/user/topup/info',
+    method: 'GET',
+    authorization: 'Bearer saved-test-token',
+  }]);
+});
+
+test('creates a signed topup payment link without exposing the access token', async () => {
+  let captured;
+  const topupFetch = async (url, init) => {
+    captured = { url, method: init.method, body: JSON.parse(init.body), authorization: init.headers.authorization };
+    return jsonResponse({
+      message: 'success',
+      url: 'https://pay.example.com/submit.php?existing=1',
+      data: {
+        type: 'wxpay',
+        money: '7.30',
+        name: 'TUC1',
+        out_trade_no: 'USR6NOtclRqn1795355599',
+        device: 'pc',
+        notify_url: 'https://relay.example.com/api/user/epay/notify',
+        sign_type: 'MD5',
+        sign: 'abc123',
+      },
+    });
+  };
+
+  const result = await createTopup({
+    baseUrl: 'https://example.com/',
+    accessToken: 'saved-test-token',
+    fetchImpl: topupFetch,
+    amount: 10,
+    paymentMethod: 'wxpay',
+  });
+
+  assert.equal(captured.url, 'https://example.com/api/user/pay');
+  assert.equal(captured.method, 'POST');
+  assert.equal(captured.authorization, 'Bearer saved-test-token');
+  assert.deepEqual(captured.body, { amount: 10, payment_method: 'wxpay' });
+  assert.equal(result.amount, 10);
+  assert.equal(result.paymentMethod, 'wxpay');
+  assert.equal(result.payMoney, '7.30');
+  assert.equal(result.outTradeNo, 'USR6NOtclRqn1795355599');
+  const payUrl = new URL(result.payUrl);
+  assert.equal(payUrl.origin + payUrl.pathname, 'https://pay.example.com/submit.php');
+  assert.equal(payUrl.searchParams.get('existing'), '1');
+  assert.equal(payUrl.searchParams.get('sign'), 'abc123');
+  assert.equal(payUrl.searchParams.get('type'), 'wxpay');
+  assert.equal(payUrl.searchParams.get('notify_url'), 'https://relay.example.com/api/user/epay/notify');
+  assert.equal(JSON.stringify(result).includes('saved-test-token'), false);
+
+  await assert.rejects(
+    createTopup({
+      baseUrl: 'https://example.com/',
+      accessToken: 'saved-test-token',
+      fetchImpl: topupFetch,
+      amount: 0,
+      paymentMethod: 'wxpay',
+    }),
+    error => error.code === 'INVALID_TOPUP_AMOUNT',
+  );
+});
+
+test('loads subscription plans and current subscriptions with approved fields', async () => {
+  const requests = [];
+  const subscriptionFetch = async (url, init) => {
+    const parsed = new URL(url);
+    requests.push({ path: parsed.pathname, method: init.method, authorization: init.headers.authorization });
+    if (parsed.pathname.endsWith('/api/subscription/plans')) {
+      return jsonResponse({
+        success: true,
+        data: [{
+          plan: {
+            id: 1,
+            title: '短视频生成套餐',
+            subtitle: '购买即送 88 折优惠',
+            price_amount: 99,
+            currency: 'USD',
+            duration_unit: 'month',
+            duration_value: 1,
+            custom_seconds: 0,
+            quota_reset_period: 'never',
+            quota_reset_custom_seconds: 0,
+            enabled: true,
+            sort_order: 0,
+            allow_balance_pay: true,
+            allow_wallet_overflow: true,
+            max_purchase_per_user: 1,
+            upgrade_group: 'vip',
+            downgrade_group: 'default',
+            total_amount: 6780822,
+            stripe_price_id: 'price_must_not_leak',
+            creem_product_id: 'creem_must_not_leak',
+            waffo_pancake_product_id: 'waffo_must_not_leak',
+          },
+        }],
+      });
+    }
+    if (parsed.pathname.endsWith('/api/subscription/self')) {
+      return jsonResponse({
+        success: true,
+        data: {
+          billing_preference: 'wallet_only',
+          subscriptions: [{
+            id: 9,
+            plan_id: 1,
+            status: 'active',
+            source: 'epay',
+            start_time: 1790000000,
+            end_time: 1792592000,
+            amount_total: 6780822,
+            amount_used: 780822,
+            next_reset_time: 0,
+            user_id: 6,
+          }],
+          all_subscriptions: [{
+            id: 8,
+            plan_id: 1,
+            status: 'expired',
+            source: 'epay',
+            start_time: 1780000000,
+            end_time: 1782592000,
+            amount_total: 6780822,
+            amount_used: 6780822,
+            next_reset_time: 0,
+          }],
+        },
+      });
+    }
+    if (parsed.pathname.endsWith('/api/user/topup/info')) {
+      return jsonResponse({
+        success: true,
+        data: {
+          enable_online_topup: true,
+          pay_methods: [{ name: '微信', type: 'wxpay' }],
+        },
+      });
+    }
+    return jsonResponse({ success: false, message: 'not found' }, 404);
+  };
+
+  const result = await getSubscriptionInfo({
+    baseUrl: 'https://example.com/',
+    accessToken: 'saved-test-token',
+    fetchImpl: subscriptionFetch,
+  });
+
+  assert.deepEqual(result.plans, [{
+    id: 1,
+    title: '短视频生成套餐',
+    subtitle: '购买即送 88 折优惠',
+    priceAmount: 99,
+    currency: 'USD',
+    durationUnit: 'month',
+    durationValue: 1,
+    customSeconds: 0,
+    quotaResetPeriod: 'never',
+    quotaResetCustomSeconds: 0,
+    enabled: true,
+    sortOrder: 0,
+    allowBalancePay: true,
+    allowWalletOverflow: true,
+    maxPurchasePerUser: 1,
+    upgradeGroup: 'vip',
+    downgradeGroup: 'default',
+    totalQuota: 6780822,
+  }]);
+  assert.equal(result.subscriptions[0].planTitle, '短视频生成套餐');
+  assert.equal(result.subscriptions[0].status, 'active');
+  assert.equal('user_id' in result.subscriptions[0], false);
+  assert.equal(result.allSubscriptions[0].status, 'expired');
+  assert.deepEqual(result.paymentMethods, [{ name: '微信', type: 'wxpay' }]);
+  assert.equal(result.onlinePaymentEnabled, true);
+  assert.equal(JSON.stringify(result).includes('must_not_leak'), false);
+  assert.equal(requests.every(request => request.authorization === 'Bearer saved-test-token'), true);
+});
+
+test('creates a signed subscription payment link', async () => {
+  let captured;
+  const subscriptionFetch = async (url, init) => {
+    captured = { url, method: init.method, body: JSON.parse(init.body), authorization: init.headers.authorization };
+    return jsonResponse({
+      message: 'success',
+      url: 'https://pay.example.com/submit.php',
+      data: {
+        type: 'wxpay',
+        money: '719.28',
+        name: '订阅套餐',
+        out_trade_no: 'SUB6NO1795355599',
+        sign_type: 'MD5',
+        sign: 'sub123',
+      },
+    });
+  };
+
+  const result = await createSubscriptionPayment({
+    baseUrl: 'https://example.com/',
+    accessToken: 'saved-test-token',
+    fetchImpl: subscriptionFetch,
+    planId: 1,
+    paymentMethod: 'wxpay',
+  });
+
+  assert.equal(captured.url, 'https://example.com/api/subscription/epay/pay');
+  assert.equal(captured.method, 'POST');
+  assert.equal(captured.authorization, 'Bearer saved-test-token');
+  assert.deepEqual(captured.body, { plan_id: 1, payment_method: 'wxpay' });
+  assert.equal(result.planId, 1);
+  assert.equal(result.paymentMethod, 'wxpay');
+  assert.equal(result.payMoney, '719.28');
+  assert.equal(result.outTradeNo, 'SUB6NO1795355599');
+  assert.equal(new URL(result.payUrl).searchParams.get('sign'), 'sub123');
+  assert.equal(JSON.stringify(result).includes('saved-test-token'), false);
+
+  await assert.rejects(
+    createSubscriptionPayment({
+      baseUrl: 'https://example.com/',
+      accessToken: 'saved-test-token',
+      fetchImpl: subscriptionFetch,
+      planId: 0,
+      paymentMethod: 'wxpay',
+    }),
+    error => error.code === 'INVALID_SUBSCRIPTION_PLAN',
+  );
+});
+
 test('API key routes require a saved login', async () => {
   const handler = createApiKeysHandler({ store: null });
   const response = await handler(new Request('http://localhost/api-keys', { method: 'GET' }));
+  const payload = await response.json();
+  assert.equal(response.status, 401);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.error.code, 'LOGIN_REQUIRED');
+});
+
+test('topup routes require a saved login', async () => {
+  const handler = createTopupHandler({ store: null });
+  const response = await handler(new Request('http://localhost/topup', { method: 'GET' }));
+  const payload = await response.json();
+  assert.equal(response.status, 401);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.error.code, 'LOGIN_REQUIRED');
+});
+
+test('subscription routes require a saved login', async () => {
+  const handler = createSubscriptionHandler({ store: null });
+  const response = await handler(new Request('http://localhost/subscription', { method: 'GET' }));
   const payload = await response.json();
   assert.equal(response.status, 401);
   assert.equal(payload.ok, false);

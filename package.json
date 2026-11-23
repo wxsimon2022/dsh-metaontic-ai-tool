@@ -1,7 +1,7 @@
 {
   "name": "dsh-metaontic-ai-tool",
   "version": "0.0.10",
-  "description": "MetaOntic AI 多模型聚合平台的 DeepSeek Harness 管理插件：访问令牌登录、注册入口、余额与用量查询、API Key 管理。",
+  "description": "MetaOntic AI 多模型聚合平台的 DeepSeek Harness 管理插件：访问令牌登录、注册入口、余额与用量查询、API Key 管理、订阅与充值。",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -30,6 +30,7 @@
     "model-gateway",
     "access-token-login",
     "api-key-management",
+    "subscription-management",
     "account-dashboard",
     "balance-query",
     "usage-query",
@@ -47,9 +48,14 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "dist/*.js",
-    "dist/*.d.ts",
-    "dist/*.js.map",
+    "dist/index.js",
+    "dist/index.d.ts",
+    "dist/index.js.map",
+    "dist/host/**/*.js",
+    "dist/host/**/*.d.ts",
+    "dist/host/**/*.js.map",
+    "dist/client.js",
+    "dist/client.js.map",
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
@@ -72,7 +78,9 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "npm run build:host && npm run build:client",
+    "build:host": "tsc -p tsconfig.build.json",
+    "build:client": "esbuild src/client.ts --bundle --format=iife --platform=browser --target=es2022 --outfile=dist/client.js --sourcemap --log-level=warning",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "check": "npm run typecheck && node --check tests/query.test.mjs",
     "test": "npm run build && node --test tests/*.test.mjs",
@@ -83,6 +91,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.19.43",
+    "esbuild": "^0.28.2",
     "typescript": "^5.9.3"
   }
 }

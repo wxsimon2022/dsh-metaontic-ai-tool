@@ -1,0 +1,9 @@
+export const PANEL_ID = 'dsh-metaontic-ai-tool';
+export const NS = 'sidebar.metaonticAiTool';
+export const QUERY_PATH = '/api/dsh-metaontic-ai-tool.query';
+export const SESSION_PATH = '/api/dsh-metaontic-ai-tool.session';
+export const API_KEYS_PATH = '/api/dsh-metaontic-ai-tool.api-keys';
+export const TOPUP_PATH = '/api/dsh-metaontic-ai-tool.topup';
+export const SUBSCRIPTION_PATH = '/api/dsh-metaontic-ai-tool.subscription';
+export const DEFAULT_BASE_URL = 'https://ai.bileego.com/';
+export const REGISTER_URL = 'https://ai.bileego.com/sign-up?aff=VzYr';

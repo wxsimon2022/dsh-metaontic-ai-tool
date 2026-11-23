@@ -1,0 +1,14 @@
+export const QUERY_ROUTE = '/api/dsh-metaontic-ai-tool.query';
+export const SESSION_ROUTE = '/api/dsh-metaontic-ai-tool.session';
+export const API_KEYS_ROUTE = '/api/dsh-metaontic-ai-tool.api-keys';
+export const TOPUP_ROUTE = '/api/dsh-metaontic-ai-tool.topup';
+export const SUBSCRIPTION_ROUTE = '/api/dsh-metaontic-ai-tool.subscription';
+export const DEFAULT_BASE_URL = 'https://ai.bileego.com/';
+export const DEFAULT_TIMEOUT_MS = 15_000;
+export const MAX_REQUEST_BYTES = 16 * 1024;
+export const MAX_TOKEN_LENGTH = 4096;
+export const MAX_TOPUP_AMOUNT = 1_000_000;
+export const MAX_PAYMENT_URL_LENGTH = 16_384;
+export const STORAGE_DIR_NAME = '.dsh-metaontic-ai-tool';
+export const STORAGE_FILE_NAME = 'login.json';
+export const USER_AGENT = 'dsh-metaontic-ai-tool/0.0.10';
