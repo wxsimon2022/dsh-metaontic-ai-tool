@@ -12,7 +12,7 @@ import {
   normalizeBaseUrl,
   QueryError,
   queryPlatform,
-} from '../index.js';
+} from '../dist/index.js';
 
 function jsonResponse(payload, status = 200) {
   return new Response(JSON.stringify(payload), {

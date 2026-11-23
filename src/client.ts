@@ -106,7 +106,7 @@ const en = {
   empty: 'No data',
 };
 
-const CSS = `
+const PANEL_CSS = `
   .mat-root{box-sizing:border-box;width:100%;max-width:880px;margin:0 auto;padding:28px 30px 44px;color:var(--dsw-alias-label-primary,#1f2329);font-size:13px}
   .mat-hero{display:flex;align-items:flex-start;gap:13px;margin-bottom:20px}
   .mat-mark{flex:0 0 auto;display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:color-mix(in srgb,var(--dsw-alias-brand-primary,#2563eb) 12%,transparent);color:var(--dsw-alias-brand-primary,#2563eb)}
@@ -155,14 +155,122 @@ const CSS = `
   @media (max-width:620px){.mat-root{padding:20px 16px 32px}.mat-metrics{grid-template-columns:1fr}.mat-row{grid-template-columns:1fr;gap:3px}}
 `;
 
-function formatNumber(value) {
+type SetState<T> = (value: T | ((previous: T) => T)) => void;
+type HFunction = (type: unknown, props?: Record<string, unknown> | null, ...children: unknown[]) => unknown;
+
+interface ReactLike {
+  Fragment: unknown;
+  createElement: HFunction;
+  useState<T>(initialValue: T): [T, SetState<T>];
+  useEffect(effect: () => void | (() => void), dependencies: readonly unknown[]): void;
+}
+
+interface PlatformInfo {
+  system_name?: string;
+  server_address?: string;
+  version?: string;
+  quota_per_unit?: number | string;
+  quota_display_type?: string;
+  usd_exchange_rate?: number | string;
+  custom_currency_symbol?: string;
+  custom_currency_exchange_rate?: number | string;
+  display_in_currency?: boolean;
+  price?: number | string;
+}
+
+interface AccountInfo {
+  id?: number | string;
+  username?: string;
+  display_name?: string;
+  role?: number | string;
+  status?: number | string;
+  group?: string;
+  quota?: number | string;
+  used_quota?: number | string;
+  request_count?: number | string;
+}
+
+interface DashboardData {
+  baseUrl: string;
+  fetchedAt: string;
+  platform: PlatformInfo;
+  account: AccountInfo;
+  authenticated?: boolean;
+  persisted?: boolean;
+}
+
+interface ApiError {
+  code?: string;
+  message?: string;
+}
+
+interface SessionData extends DashboardData {
+  savedLoginInvalid?: boolean;
+}
+
+interface SessionPayload {
+  ok?: boolean;
+  data?: SessionData;
+  error?: ApiError;
+}
+
+interface QueryPayload {
+  ok?: boolean;
+  data?: DashboardData;
+  error?: ApiError;
+}
+
+interface ChangeEventLike {
+  target: { value: string };
+}
+
+interface FormEventLike {
+  preventDefault?: () => void;
+}
+
+interface RowProps {
+  label: unknown;
+  value?: unknown;
+  mono?: boolean;
+}
+
+interface PanelIconViewProps {
+  size?: number;
+  active?: boolean;
+}
+
+interface LoginFormProps {
+  baseUrl: string;
+  setBaseUrl: SetState<string>;
+  token: string;
+  setToken: SetState<string>;
+  showToken: boolean;
+  setShowToken: SetState<boolean>;
+  pending: boolean;
+  error: string;
+  onSubmit: (event?: FormEventLike) => void | Promise<void>;
+}
+
+interface CardProps {
+  data: DashboardData;
+}
+
+interface CurrencyUnit {
+  symbol: string;
+  code: string;
+  rate: number;
+}
+
+type UiStatus = 'restoring' | 'idle' | 'pending' | 'ready';
+
+function formatNumber(value: unknown): string {
   const number = Number(value);
   if (!Number.isFinite(number)) return '0';
   const text = Math.abs(number) >= 1 ? number.toFixed(2) : number.toFixed(4);
   return text.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
 }
 
-function currency(platform) {
+function currency(platform?: PlatformInfo): CurrencyUnit {
   const type = String(platform?.quota_display_type || 'USD').toUpperCase();
   if (type === 'CNY') {
     return { symbol: '¥', code: 'CNY', rate: Number(platform?.usd_exchange_rate) || 1 };
@@ -177,13 +285,13 @@ function currency(platform) {
   return { symbol: '$', code: 'USD', rate: 1 };
 }
 
-function formatQuota(quota, platform) {
+function formatQuota(quota: unknown, platform?: PlatformInfo): string {
   const perUnit = Number(platform?.quota_per_unit) || 500000;
   const unit = currency(platform);
   return `${unit.symbol}${formatNumber((Number(quota) || 0) / perUnit * unit.rate)}`;
 }
 
-function roleLabel(t, role) {
+function roleLabel(t: DshTranslate, role: unknown): string {
   const value = Number(role);
   if (value >= 100) return t('roleRoot');
   if (value >= 10) return t('roleAdmin');
@@ -191,15 +299,15 @@ function roleLabel(t, role) {
   return t('roleUnknown');
 }
 
-function createPanel(React, h, t) {
-  function Row({ label, value, mono = false }) {
+function createPanel(React: ReactLike, h: HFunction, t: DshTranslate) {
+  function Row({ label, value, mono = false }: RowProps) {
     return h('div', { className: 'mat-row' }, [
       h('div', { key: 'label', className: 'mat-row-label' }, label),
       h('div', { key: 'value', className: `mat-row-value${mono ? ' mat-mono' : ''}` }, value ?? t('empty')),
     ]);
   }
 
-  function PanelIconView({ size = 18, active = false }) {
+  function PanelIconView({ size = 18, active = false }: PanelIconViewProps) {
     const pixels = Number(size) || 18;
     return h('svg', {
       width: pixels,
@@ -228,7 +336,7 @@ function createPanel(React, h, t) {
     ]);
   }
 
-  function LoginForm({ baseUrl, setBaseUrl, token, setToken, showToken, setShowToken, pending, error, onSubmit }) {
+  function LoginForm({ baseUrl, setBaseUrl, token, setToken, showToken, setShowToken, pending, error, onSubmit }: LoginFormProps) {
     return h('form', { className: 'mat-card mat-login', onSubmit }, [
       h('label', { key: 'url-field', className: 'mat-field' }, [
         h('span', { key: 'label', className: 'mat-label' }, t('baseUrl')),
@@ -237,7 +345,7 @@ function createPanel(React, h, t) {
           className: 'mat-input mat-mono',
           type: 'url',
           value: baseUrl,
-          onChange: event => setBaseUrl(event.target.value),
+          onChange: (event: ChangeEventLike) => setBaseUrl(event.target.value),
           placeholder: DEFAULT_BASE_URL,
           autoComplete: 'url',
           disabled: pending,
@@ -252,7 +360,7 @@ function createPanel(React, h, t) {
             className: 'mat-input mat-mono',
             type: showToken ? 'text' : 'password',
             value: token,
-            onChange: event => setToken(event.target.value),
+            onChange: (event: ChangeEventLike) => setToken(event.target.value),
             placeholder: t('accessTokenPlaceholder'),
             autoComplete: 'off',
             spellCheck: false,
@@ -280,7 +388,7 @@ function createPanel(React, h, t) {
     ]);
   }
 
-  function AccountCard({ data }) {
+  function AccountCard({ data }: CardProps) {
     const { account, platform } = data;
     const remaining = Number(account.quota) || 0;
     const used = Number(account.used_quota) || 0;
@@ -324,7 +432,7 @@ function createPanel(React, h, t) {
     ]);
   }
 
-  function PlatformCard({ data }) {
+  function PlatformCard({ data }: CardProps) {
     const { platform, baseUrl, fetchedAt } = data;
     const unit = currency(platform);
     return h('section', { className: 'mat-card' }, [
@@ -343,28 +451,28 @@ function createPanel(React, h, t) {
   }
 
   function Dashboard() {
-    const [baseUrl, setBaseUrl] = React.useState(DEFAULT_BASE_URL);
-    const [token, setToken] = React.useState('');
-    const [showToken, setShowToken] = React.useState(false);
-    const [status, setStatus] = React.useState('restoring');
-    const [data, setData] = React.useState(null);
-    const [error, setError] = React.useState('');
-    const [notice, setNotice] = React.useState('');
-    const [persisted, setPersisted] = React.useState(false);
+    const [baseUrl, setBaseUrl] = React.useState<string>(DEFAULT_BASE_URL);
+    const [token, setToken] = React.useState<string>('');
+    const [showToken, setShowToken] = React.useState<boolean>(false);
+    const [status, setStatus] = React.useState<UiStatus>('restoring');
+    const [data, setData] = React.useState<DashboardData | null>(null);
+    const [error, setError] = React.useState<string>('');
+    const [notice, setNotice] = React.useState<string>('');
+    const [persisted, setPersisted] = React.useState<boolean>(false);
     const pending = status === 'pending';
 
-    async function fetchSession() {
+    async function fetchSession(): Promise<{ response: Response; payload: SessionPayload }> {
       const response = await fetch(SESSION_PATH, { method: 'GET', cache: 'no-store' });
-      let payload;
+      let payload: SessionPayload;
       try {
-        payload = await response.json();
+        payload = await response.json() as SessionPayload;
       } catch {
         throw new Error(t('invalidResponse'));
       }
       return { response, payload };
     }
 
-    function acceptSession(payload) {
+    function acceptSession(payload: SessionPayload): boolean {
       const value = payload?.data;
       if (!value?.authenticated) return false;
       setBaseUrl(value.baseUrl || DEFAULT_BASE_URL);
@@ -400,7 +508,7 @@ function createPanel(React, h, t) {
       return () => { cancelled = true; };
     }, []);
 
-    async function query(event) {
+    async function query(event?: FormEventLike): Promise<void> {
       event?.preventDefault?.();
       if (pending) return;
       if (!token.trim()) {
@@ -416,13 +524,13 @@ function createPanel(React, h, t) {
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ baseUrl, accessToken: token }),
         });
-        let payload;
+        let payload: QueryPayload;
         try {
-          payload = await response.json();
+          payload = await response.json() as QueryPayload;
         } catch {
           throw new Error(t('invalidResponse'));
         }
-        if (!response.ok || !payload?.ok) {
+        if (!response.ok || !payload?.ok || !payload.data) {
           throw new Error(payload?.error?.message || t('requestFailed'));
         }
         setBaseUrl(payload.data.baseUrl || baseUrl);
@@ -441,7 +549,7 @@ function createPanel(React, h, t) {
       }
     }
 
-    async function refresh(event) {
+    async function refresh(event?: FormEventLike): Promise<void> {
       event?.preventDefault?.();
       if (pending) return;
       if (token.trim()) return query(event);
@@ -466,7 +574,7 @@ function createPanel(React, h, t) {
       }
     }
 
-    async function logout(event) {
+    async function logout(event?: FormEventLike): Promise<void> {
       event?.preventDefault?.();
       if (pending) return;
       setStatus('pending');
@@ -485,7 +593,7 @@ function createPanel(React, h, t) {
     }
 
     return h(React.Fragment, null, [
-      h('style', { key: 'style' }, CSS),
+      h('style', { key: 'style' }, PANEL_CSS),
       h('div', { key: 'panel', className: 'mat-root' }, [
         h(Header, { key: 'header' }),
         status === 'restoring' && !data
@@ -531,11 +639,11 @@ function createPanel(React, h, t) {
 window.__ModuleLoader__.load({
   id: PANEL_ID,
   factory(require) {
-    const React = require('react');
+    const React = require('react') as ReactLike;
     const h = React.createElement;
     return {
       inject: ['slots', 'locale'],
-      apply(ctx) {
+      apply(ctx: DshClientContext) {
         ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'dsh-metaontic-ai-tool: dictionaries');
         const t = ctx.locale.bind(NS);
         const { Dashboard, PanelIconView } = createPanel(React, h, t);

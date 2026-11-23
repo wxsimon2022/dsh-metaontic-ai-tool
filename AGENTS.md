@@ -2,21 +2,23 @@
 
 ## Project Structure & Module Organization
 
-This repository is the `dsh` Host and browser plugin for the MetaOntic AI management tool, built on open-source New API. `index.js` contains the login/query routes, URL/token validation, upstream requests, sanitized response mapping, and profile-local login storage. `client.js` registers the sidebar icon and main login/query panel, restores saved sessions, and clears them on logout. `cordis.patch.yml` mounts the bundle; `package.json` declares exports, files, and `dsh.client`. Metadata lives in `locale/zh.json` and `locale/en.json`; tests are in `tests/`.
+This repository is the `dsh` Host and browser plugin for the MetaOntic AI management tool, built on open-source New API. TypeScript sources live in `src/`: `index.ts` contains the login/query routes, validation, upstream requests, sanitized mapping, and profile-local login storage; `client.ts` registers the sidebar icon and main panel. `src/types/dsh.d.ts` declares the browser-side host APIs. `tsc` emits runtime files to `dist/`; `package.json` exports those files. `cordis.patch.yml` mounts the bundle, and metadata lives in `locale/`.
 
 ## Build, Test, and Development Commands
 
-- `npm run check` checks Host, Client, and test syntax.
-- `npm test` runs the offline `node:test` suite.
+- `npm run build` compiles `src/*.ts` to `dist/` with `tsc`.
+- `npm run typecheck` checks types without emitting files.
+- `npm run check` runs type checking and validates test syntax.
+- `npm test` builds, then runs the offline `node:test` suite against `dist/`.
 - `npm run pack:check` verifies the published file list.
 - `npm pack` creates `dsh-metaontic-ai-tool-0.1.0.tgz`.
 - `dsh plugin --profile desktop add ./dsh-metaontic-ai-tool-0.1.0.tgz` installs it locally.
 
-Use Node.js 20 or newer. Run `npm run check` and `npm test` before submitting changes.
+Use Node.js 20 or newer. Run `npm install`, `npm run check`, and `npm test` before submitting changes. Never edit `dist/` by hand; it is generated and ignored by Git.
 
 ## Coding Style & Naming Conventions
 
-Use ES modules, two-space indentation, semicolons, and single quotes. Keep JSON indented by two spaces and plugin IDs in kebab case, such as `dsh-metaontic-ai-tool`. Browser UI uses the host-provided React instance through `require('react')`. No formatter or linter is configured; match surrounding files and keep changes focused.
+Use TypeScript, ES modules, two-space indentation, semicolons, and single quotes. Prefer explicit interfaces for API payloads and avoid `any` unless typing a host-provided dynamic object. Keep JSON indented by two spaces and plugin IDs in kebab case, such as `dsh-metaontic-ai-tool`. The browser UI uses the host-provided React instance through `require('react')`. No formatter or linter is configured; match surrounding files and keep changes focused.
 
 ## Testing Guidelines
 

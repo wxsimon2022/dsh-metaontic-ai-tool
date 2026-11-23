@@ -15,8 +15,11 @@ MetaOntic AI 管理工具的 dsh 插件。MetaOntic AI 以开源 New API 为底�
 
 ```text
 .
-├── index.js            # Host 入口与平台查询接口
-├── client.js           # 左侧栏登录与查询界面
+├── src/
+│   ├── index.ts        # Host 入口与平台查询接口
+│   ├── client.ts       # 左侧栏登录与查询界面
+│   └── types/dsh.d.ts  # DSH 浏览器端最小类型声明
+├── dist/               # tsc 生成，随安装包发布
 ├── cordis.patch.yml    # 插件挂载条目
 ├── locale/             # 插件元信息（中文 / English）
 ├── icon.svg            # 插件图标
@@ -26,9 +29,12 @@ MetaOntic AI 管理工具的 dsh 插件。MetaOntic AI 以开源 New API 为底�
 ## 开发与验证
 
 ```bash
-npm run check     # 检查 Host、Client 与测试文件语法
-npm test          # 运行离线接口契约测试
-npm pack          # 生成安装包
+npm install       # 安装 TypeScript 与 Node 类型
+npm run build     # 将 src/*.ts 编译到 dist/
+npm run check     # 类型检查并校验测试文件语法
+npm test          # 构建后运行离线接口契约测试
+npm run pack:check # 检查安装包内容
+npm pack          # 自动构建并生成安装包
 ```
 
 安装本地包：

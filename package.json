@@ -4,6 +4,8 @@
   "private": true,
   "description": "基于开源 New API 的 MetaOntic AI 管理工具，支持访问令牌登录与平台查询。",
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "license": "UNLICENSED",
   "keywords": [
     "deepseek-harness",
@@ -14,15 +16,19 @@
     "ai-management"
   ],
   "exports": {
-    ".": "./index.js",
-    "./client": "./client.js",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./client": "./dist/client.js",
     "./locale/*.json": "./locale/*.json",
     "./icon": "./icon.svg",
     "./package.json": "./package.json"
   },
   "files": [
-    "index.js",
-    "client.js",
+    "dist/*.js",
+    "dist/*.d.ts",
+    "dist/*.js.map",
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
@@ -44,8 +50,15 @@
     }
   },
   "scripts": {
-    "check": "node --check index.js && node --check client.js && node --check tests/query.test.mjs",
-    "test": "node --test tests/*.test.mjs",
-    "pack:check": "npm pack --dry-run"
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "check": "npm run typecheck && node --check tests/query.test.mjs",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "pack:check": "npm pack --dry-run",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "typescript": "^5.9.3"
   }
 }

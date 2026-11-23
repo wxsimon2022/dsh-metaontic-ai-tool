@@ -22,7 +22,7 @@ const PLATFORM_FIELDS = [
   'custom_currency_exchange_rate',
   'display_in_currency',
   'price',
-];
+] as const;
 
 const ACCOUNT_FIELDS = [
   'id',
@@ -34,10 +34,100 @@ const ACCOUNT_FIELDS = [
   'quota',
   'used_quota',
   'request_count',
-];
+] as const;
+
+type PlatformField = (typeof PLATFORM_FIELDS)[number];
+type AccountField = (typeof ACCOUNT_FIELDS)[number];
+
+export type PlatformInfo = Partial<Record<PlatformField, unknown>>;
+export type AccountInfo = Partial<Record<AccountField, unknown>>;
+
+export interface QueryResult {
+  baseUrl: string;
+  fetchedAt: string;
+  platform: PlatformInfo;
+  account: AccountInfo;
+}
+
+export interface QueryOptions {
+  baseUrl?: unknown;
+  accessToken?: unknown;
+  fetchImpl?: typeof fetch;
+  timeoutMs?: number;
+}
+
+export type QueryFunction = (options: QueryOptions) => Promise<QueryResult>;
+
+interface ReadJsonOptions {
+  accessToken?: string;
+  fetchImpl: typeof fetch;
+  timeoutMs: number;
+}
+
+interface SettingsService {
+  documentPath?: unknown;
+}
+
+interface FetchRoute {
+  path: string;
+  methods: string[];
+  requestBody: 'buffered';
+  fetch: (request: Request) => Promise<Response>;
+}
+
+export interface PluginContext {
+  settings?: SettingsService;
+  configEditor?: SettingsService;
+  get?: (name: string) => SettingsService | undefined;
+  logger?: { warn?: (message: string) => void };
+  connection?: {
+    fetch?: {
+      register?: (route: FetchRoute) => (() => void) | void;
+    };
+  };
+}
+
+export interface LoginRecord {
+  baseUrl: string;
+  accessToken: string;
+  savedAt?: string;
+}
+
+export interface LoginStore {
+  save(baseUrl: unknown, accessToken: unknown): Promise<void>;
+  load(): Promise<LoginRecord | null>;
+  clear(): Promise<void>;
+}
+
+interface LoginStoreOptions {
+  ctx?: PluginContext;
+  directory?: string;
+  moduleUrl?: string;
+}
+
+interface QueryHandlerOptions {
+  store?: LoginStore | null;
+  query?: QueryFunction;
+}
+
+interface SessionHandlerOptions {
+  store?: LoginStore | null;
+  query?: QueryFunction;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function hasErrorCode(value: unknown): value is { code?: string } {
+  return isRecord(value) && 'code' in value;
+}
 
 export class QueryError extends Error {
-  constructor(code, message, status = 400) {
+  readonly code: string;
+  readonly status: number;
+
+  constructor(code: string, message: string, status = 400) {
     super(message);
     this.name = 'QueryError';
     this.code = code;
@@ -45,9 +135,9 @@ export class QueryError extends Error {
   }
 }
 
-export function normalizeBaseUrl(value) {
+export function normalizeBaseUrl(value: unknown): string {
   const raw = String(value ?? DEFAULT_BASE_URL).trim() || DEFAULT_BASE_URL;
-  let url;
+  let url: URL;
   try {
     url = new URL(raw);
   } catch {
@@ -63,7 +153,7 @@ export function normalizeBaseUrl(value) {
   return url.toString().replace(/\/$/, '');
 }
 
-export function normalizeAccessToken(value) {
+export function normalizeAccessToken(value: unknown): string {
   const token = String(value ?? '').trim().replace(/^Bearer\s+/i, '').trim();
   if (!token) throw new QueryError('TOKEN_REQUIRED', '请填写访问令牌。');
   if (token.length > MAX_TOKEN_LENGTH || /\s/.test(token)) {
@@ -72,21 +162,23 @@ export function normalizeAccessToken(value) {
   return token;
 }
 
-function endpoint(baseUrl, path) {
+function endpoint(baseUrl: string, path: string): string {
   return new URL(path.replace(/^\/+/, ''), `${baseUrl}/`).toString();
 }
 
-function pickFields(value, fields) {
-  const source = value && typeof value === 'object' ? value : {};
-  const result = {};
+function pickFields<T extends string>(value: unknown, fields: readonly T[]): Partial<Record<T, unknown>> {
+  const source = isRecord(value) ? value : {};
+  const result: Partial<Record<T, unknown>> = {};
   for (const field of fields) {
     if (source[field] !== undefined && source[field] !== null) result[field] = source[field];
   }
   return result;
 }
 
-function upstreamMessage(value) {
-  const message = value && typeof value === 'object' ? value.message ?? value.error?.message : '';
+function upstreamMessage(value: unknown): string {
+  const payload = isRecord(value) ? value : {};
+  const nestedError = isRecord(payload.error) ? payload.error : {};
+  const message = payload.message ?? nestedError.message;
   return String(message || '')
     .replace(/Bearer\s+[^\s,;]+/gi, 'Bearer [redacted]')
     .replace(/\s+/g, ' ')
@@ -94,17 +186,17 @@ function upstreamMessage(value) {
     .slice(0, 240);
 }
 
-function unwrap(payload) {
-  if (payload && typeof payload === 'object' && payload.success === false) {
+function unwrap(payload: unknown): unknown {
+  if (isRecord(payload) && payload.success === false) {
     throw new QueryError('UPSTREAM_REJECTED', upstreamMessage(payload) || '平台拒绝了查询请求。', 502);
   }
-  return payload && typeof payload === 'object' ? payload.data ?? payload : payload;
+  return isRecord(payload) && payload.data !== undefined ? payload.data : payload;
 }
 
-async function readJson(url, { accessToken, fetchImpl, timeoutMs }) {
+async function readJson(url: string, { accessToken, fetchImpl, timeoutMs }: ReadJsonOptions): Promise<unknown> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
-  const headers = {
+  const headers: Record<string, string> = {
     accept: 'application/json',
     'user-agent': 'dsh-metaontic-ai-tool/0.1.0',
   };
@@ -118,7 +210,7 @@ async function readJson(url, { accessToken, fetchImpl, timeoutMs }) {
       signal: controller.signal,
     });
     const text = await response.text();
-    let payload;
+    let payload: unknown;
     try {
       payload = text ? JSON.parse(text) : null;
     } catch {
@@ -135,7 +227,7 @@ async function readJson(url, { accessToken, fetchImpl, timeoutMs }) {
     return payload;
   } catch (error) {
     if (error instanceof QueryError) throw error;
-    if (error?.name === 'AbortError') {
+    if (error instanceof Error && error.name === 'AbortError') {
       throw new QueryError('TIMEOUT', '平台响应超时，请稍后重试。', 504);
     }
     throw new QueryError('NETWORK_ERROR', '无法连接平台，请检查平台地址和网络。', 502);
@@ -144,12 +236,13 @@ async function readJson(url, { accessToken, fetchImpl, timeoutMs }) {
   }
 }
 
-export async function queryPlatform({
-  baseUrl = DEFAULT_BASE_URL,
-  accessToken,
-  fetchImpl = globalThis.fetch,
-  timeoutMs = DEFAULT_TIMEOUT_MS,
-} = {}) {
+export async function queryPlatform(options: QueryOptions = {}): Promise<QueryResult> {
+  const {
+    baseUrl = DEFAULT_BASE_URL,
+    accessToken,
+    fetchImpl = globalThis.fetch,
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+  } = options;
   const normalizedBaseUrl = normalizeBaseUrl(baseUrl);
   const normalizedToken = normalizeAccessToken(accessToken);
   if (typeof fetchImpl !== 'function') {
@@ -178,7 +271,7 @@ export async function queryPlatform({
   };
 }
 
-async function exists(path) {
+async function exists(path: string): Promise<boolean> {
   try {
     await access(path);
     return true;
@@ -187,7 +280,7 @@ async function exists(path) {
   }
 }
 
-async function defaultProfileDirectory(moduleUrl) {
+async function defaultProfileDirectory(moduleUrl: string): Promise<string | null> {
   let current = dirname(fileURLToPath(moduleUrl));
   for (let depth = 0; depth < 8; depth += 1) {
     if (await exists(join(current, 'cordis.patch.yml'))) return current;
@@ -198,22 +291,23 @@ async function defaultProfileDirectory(moduleUrl) {
   return null;
 }
 
-async function resolveStorageDirectory({ ctx, moduleUrl }) {
-  const candidates = [];
+async function resolveStorageDirectory({ ctx, moduleUrl }: { ctx?: PluginContext; moduleUrl: string }): Promise<string> {
+  const candidates: unknown[] = [];
   try { candidates.push(ctx?.settings?.documentPath); } catch { /* optional service */ }
   try { candidates.push(ctx?.configEditor?.documentPath); } catch { /* optional service */ }
   try { candidates.push(ctx?.get?.('settings')?.documentPath); } catch { /* optional service */ }
   try { candidates.push(ctx?.get?.('configEditor')?.documentPath); } catch { /* optional service */ }
-  const documentPath = candidates.find(value => typeof value === 'string' && value);
+  const documentPath = candidates.find((value): value is string => typeof value === 'string' && value.length > 0);
   if (documentPath) return join(dirname(documentPath), STORAGE_DIR_NAME);
   const profileDirectory = await defaultProfileDirectory(moduleUrl);
   if (profileDirectory) return join(profileDirectory, STORAGE_DIR_NAME);
   throw new QueryError('STORAGE_UNAVAILABLE', '无法确定本机登录信息的保存位置。', 500);
 }
 
-export function createLoginStore({ ctx, directory, moduleUrl = import.meta.url } = {}) {
-  let directoryPromise;
-  function storageDirectory() {
+export function createLoginStore({ ctx, directory, moduleUrl = import.meta.url }: LoginStoreOptions = {}): LoginStore {
+  let directoryPromise: Promise<string> | undefined;
+
+  function storageDirectory(): Promise<string> {
     if (directory) return Promise.resolve(directory);
     directoryPromise ??= (async () => {
       const resolved = await resolveStorageDirectory({ ctx, moduleUrl });
@@ -223,12 +317,12 @@ export function createLoginStore({ ctx, directory, moduleUrl = import.meta.url }
     return directoryPromise;
   }
 
-  async function filePath() {
+  async function filePath(): Promise<string> {
     return join(await storageDirectory(), STORAGE_FILE_NAME);
   }
 
   return {
-    async save(baseUrl, accessToken) {
+    async save(baseUrl: unknown, accessToken: unknown): Promise<void> {
       const path = await filePath();
       const temporary = `${path}.${process.pid}.${Date.now()}.tmp`;
       const payload = JSON.stringify({
@@ -247,17 +341,17 @@ export function createLoginStore({ ctx, directory, moduleUrl = import.meta.url }
       }
     },
 
-    async load() {
+    async load(): Promise<LoginRecord | null> {
       try {
         const text = await readFile(await filePath(), 'utf8');
-        const saved = JSON.parse(text);
+        const saved: unknown = JSON.parse(text);
+        if (!isRecord(saved)) return null;
         return {
           baseUrl: normalizeBaseUrl(saved?.baseUrl),
           accessToken: normalizeAccessToken(saved?.accessToken),
           savedAt: typeof saved?.savedAt === 'string' ? saved.savedAt : undefined,
         };
-      } catch (error) {
-        if (error?.code === 'ENOENT') return null;
+      } catch {
         return null;
       }
     },
@@ -266,13 +360,13 @@ export function createLoginStore({ ctx, directory, moduleUrl = import.meta.url }
       try {
         await unlink(await filePath());
       } catch (error) {
-        if (error?.code !== 'ENOENT') throw error;
+        if (!hasErrorCode(error) || error.code !== 'ENOENT') throw error;
       }
     },
   };
 }
 
-async function readRequestBody(request) {
+async function readRequestBody(request: Request): Promise<unknown> {
   const contentLength = Number(request.headers?.get?.('content-length'));
   if (Number.isFinite(contentLength) && contentLength > MAX_REQUEST_BYTES) {
     throw new QueryError('INVALID_REQUEST', '请求内容过大。');
@@ -288,7 +382,7 @@ async function readRequestBody(request) {
   }
 }
 
-function errorResponse(error, data) {
+function errorResponse(error: unknown, data?: unknown): Response {
   const failure = error instanceof QueryError
     ? error
     : new QueryError('INTERNAL_ERROR', '操作失败。', 500);
@@ -302,18 +396,18 @@ function errorResponse(error, data) {
   });
 }
 
-export function createQueryHandler({ store, query = queryPlatform } = {}) {
-  return async function handleQueryRequest(request) {
+export function createQueryHandler({ store, query = queryPlatform }: QueryHandlerOptions = {}) {
+  return async function handleQueryRequest(request: Request): Promise<Response> {
     try {
       const body = await readRequestBody(request);
-      const data = await query({
-        baseUrl: body?.baseUrl,
-        accessToken: body?.accessToken,
-      });
+      const payload: QueryOptions = isRecord(body)
+        ? { baseUrl: body.baseUrl, accessToken: body.accessToken }
+        : {};
+      const data = await query(payload);
       let persisted = false;
       if (store) {
         try {
-          await store.save(data.baseUrl, body.accessToken);
+          await store.save(data.baseUrl, payload.accessToken);
           persisted = true;
         } catch {
           persisted = false;
@@ -328,8 +422,8 @@ export function createQueryHandler({ store, query = queryPlatform } = {}) {
   };
 }
 
-export function createSessionHandler({ store, query = queryPlatform } = {}) {
-  return async function handleSessionRequest(request) {
+export function createSessionHandler({ store, query = queryPlatform }: SessionHandlerOptions = {}) {
+  return async function handleSessionRequest(request: Request): Promise<Response> {
     try {
       if (request.method === 'DELETE') {
         if (store) await store.clear();
@@ -374,7 +468,7 @@ export function createSessionHandler({ store, query = queryPlatform } = {}) {
 
 export const inject = ['connection'];
 
-export function apply(ctx) {
+export function apply(ctx: PluginContext): (() => void) | undefined {
   const connectionFetch = ctx.connection?.fetch;
   if (!connectionFetch?.register) {
     ctx.logger?.warn?.('[dsh-metaontic-ai-tool] connection.fetch is unavailable');
