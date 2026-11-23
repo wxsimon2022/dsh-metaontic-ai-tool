@@ -97,3 +97,10 @@ test('keeps packed archives out of the repository root', () => {
 
   assert.match(npmrc, /^pack-destination=release$/m);
 });
+
+test('keeps the upstream user agent in sync with the package version', () => {
+  const index = readFileSync(new URL('src/index.ts', root), 'utf8');
+  const agent = `dsh-metaontic-ai-tool/${pkg.version}`;
+
+  assert.ok(index.includes(agent), `missing user agent: ${agent}`);
+});

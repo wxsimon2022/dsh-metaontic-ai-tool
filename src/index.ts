@@ -258,7 +258,7 @@ async function requestJson(url: string, {
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const headers: Record<string, string> = {
     accept: 'application/json',
-    'user-agent': 'dsh-metaontic-ai-tool/0.0.9',
+    'user-agent': 'dsh-metaontic-ai-tool/0.0.10',
   };
   if (accessToken) headers.authorization = `Bearer ${accessToken}`;
   if (body !== undefined) headers['content-type'] = 'application/json';
