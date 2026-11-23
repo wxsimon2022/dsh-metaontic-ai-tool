@@ -11,8 +11,8 @@ This repository is the `dsh` Host and browser plugin for the MetaOntic AI manage
 - `npm run check` runs type checking and validates test syntax.
 - `npm test` builds, then runs the offline `node:test` suite against `dist/`.
 - `npm run pack:check` verifies the published file list.
-- `npm pack` creates `dsh-metaontic-ai-tool-0.1.0.tgz`.
-- `dsh plugin --profile desktop add ./dsh-metaontic-ai-tool-0.1.0.tgz` installs it locally.
+- `npm pack` creates `dsh-metaontic-ai-tool-0.0.1.tgz`.
+- `dsh plugin --profile desktop add ./dsh-metaontic-ai-tool-0.0.1.tgz` installs it locally.
 
 Use Node.js 20 or newer. Run `npm install`, `npm run check`, and `npm test` before submitting changes. Never edit `dist/` by hand; it is generated and ignored by Git.
 

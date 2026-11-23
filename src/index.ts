@@ -198,7 +198,7 @@ async function readJson(url: string, { accessToken, fetchImpl, timeoutMs }: Read
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const headers: Record<string, string> = {
     accept: 'application/json',
-    'user-agent': 'dsh-metaontic-ai-tool/0.1.0',
+    'user-agent': 'dsh-metaontic-ai-tool/0.0.1',
   };
   if (accessToken) headers.authorization = `Bearer ${accessToken}`;
 

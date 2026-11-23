@@ -1,12 +1,19 @@
 {
   "name": "dsh-metaontic-ai-tool",
-  "version": "0.1.0",
-  "private": true,
+  "version": "0.0.1",
   "description": "基于开源 New API 的 MetaOntic AI 管理工具，支持访问令牌登录与平台查询。",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wxsimon2022/dsh-metaontic-ai-tool.git"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "keywords": [
     "deepseek-harness",
     "dsh",
@@ -55,6 +62,7 @@
     "check": "npm run typecheck && node --check tests/query.test.mjs",
     "test": "npm run build && node --test tests/*.test.mjs",
     "pack:check": "npm pack --dry-run",
+    "release:gitee": "node scripts/publish-gitee.mjs",
     "prepack": "npm run build"
   },
   "devDependencies": {

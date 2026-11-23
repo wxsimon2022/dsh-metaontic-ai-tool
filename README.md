@@ -40,7 +40,7 @@ npm pack          # 自动构建并生成安装包
 安装本地包：
 
 ```bash
-dsh plugin --profile desktop add ./dsh-metaontic-ai-tool-0.1.0.tgz
+dsh plugin --profile desktop add ./dsh-metaontic-ai-tool-0.0.1.tgz
 ```
 
 重启 Harness 后，点击左侧栏的 **MetaOntic AI**，确认平台地址并填入访问令牌。
