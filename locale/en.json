@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "MetaOntic AI Management Tool",
-    "description": "A MetaOntic AI dsh tool for the open-source New API multi-model aggregation platform, with access-token login and platform queries."
+    "description": "MetaOntic AI is a multi-model aggregation platform offering stable, reliable model services. This plugin supports access-token login, registration and platform account queries."
   }
 }

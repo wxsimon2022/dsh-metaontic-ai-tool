@@ -8,7 +8,7 @@ const REGISTER_URL = 'https://ai.bileego.com/sign-up?aff=VzYr';
 const zh = {
   sidebarLabel: 'MetaOntic AI',
   title: 'MetaOntic AI 管理工具',
-  intro: '使用访问令牌登录，查询 MetaOntic AI 平台与当前账户信息。',
+  intro: 'MetaOntic AI 是多模型聚合平台，提供稳定可靠的模型服务。使用访问令牌登录后查询平台与当前账户信息。',
   baseUrl: '平台地址',
   accessToken: '访问令牌',
   accessTokenPlaceholder: '请输入访问令牌',
@@ -61,7 +61,7 @@ const zh = {
 const en = {
   sidebarLabel: 'MetaOntic AI',
   title: 'MetaOntic AI Management Tool',
-  intro: 'Sign in with an access token to inspect the MetaOntic AI platform and account.',
+  intro: 'MetaOntic AI is a multi-model aggregation platform offering stable, reliable model services. Sign in with an access token to inspect the platform and your account.',
   baseUrl: 'Platform URL',
   accessToken: 'Access token',
   accessTokenPlaceholder: 'Enter access token',
