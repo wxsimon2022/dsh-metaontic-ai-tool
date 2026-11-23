@@ -38,7 +38,7 @@ jobs:
           else
             gh release create "$tag" release/*.tgz \
               --repo "$GITHUB_REPOSITORY" \
-              --title "MetaOntic AI 管理工具 $tag" \
+              --title "MetaOntic模型中转助手 $tag" \
               --notes-file release/notes.txt \
               --verify-tag
           fi
