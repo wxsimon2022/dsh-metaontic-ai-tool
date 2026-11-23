@@ -14,6 +14,17 @@ function response(body, status = 200) {
   };
 }
 
+test('publishes the MIT license', async () => {
+  const root = new URL('../', import.meta.url);
+  const pkg = JSON.parse(await readFile(new URL('package.json', root), 'utf8'));
+  const license = await readFile(new URL('LICENSE', root), 'utf8');
+
+  assert.equal(pkg.license, 'MIT');
+  assert.ok(pkg.files.includes('LICENSE'));
+  assert.match(license, /^MIT License\n/);
+  assert.match(license, /Copyright \(c\) 2026 MetaOntic AI contributors/);
+});
+
 test('Gitee release requires a token', async () => {
   await assert.rejects(
     publishGitee({ tag: 'v0.0.1', archive: 'missing.tgz', notes: 'notes' }),

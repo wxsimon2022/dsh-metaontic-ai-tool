@@ -56,3 +56,7 @@ dsh plugin --profile desktop add ./dsh-metaontic-ai-tool-0.0.1.tgz
 登录文件位于当前 profile 的 `.dsh-metaontic-ai-tool/login.json`，目录权限为
 `0700`、文件权限为 `0600`，仅当前系统用户可读。所有上游请求禁止重定向并设置
 超时；返回账户字段经过白名单过滤，不会把上游令牌、邮箱或其他未使用字段带到界面。
+
+## 开源协议
+
+本项目基于 [MIT License](LICENSE) 开源。
