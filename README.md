@@ -1,12 +1,13 @@
 # dsh-metaontic-ai-tool
 
-MetaOntic AI 管理工具的 dsh 插件。MetaOntic AI 以开源 New API 为底层平台，
-当前提供访问令牌登录、平台状态与账户信息查询，默认平台地址为
+MetaOntic AI 是面向多模型聚合管理的平台。本仓库提供其 dsh 插件，基于开源
+New API，当前支持访问令牌登录、平台状态与账户信息查询，默认平台地址为
 `https://ai.bileego.com/`。
 
 ## 功能
 
 - 用户在左侧栏面板填写访问令牌后登录，不要求用户名或密码。
+- 未填写访问令牌时显示注册入口，跳转至带邀请码的 MetaOntic AI 注册页。
 - 查询 New API 的 `/api/status` 与 `/api/user/self`。
 - 展示平台名称、版本、服务地址、账户分组、可用余额、已用额度和请求次数。
 - 登录成功后由 Host 把平台地址与访问令牌保存到本机 profile，下次自动恢复登录。
@@ -40,7 +41,7 @@ npm pack          # 自动构建并生成安装包
 安装本地包：
 
 ```bash
-dsh plugin --profile desktop add ./dsh-metaontic-ai-tool-0.0.1.tgz
+dsh plugin --profile desktop add ./dsh-metaontic-ai-tool-0.0.2.tgz
 ```
 
 重启 Harness 后，点击左侧栏的 **MetaOntic AI**，确认平台地址并填入访问令牌。

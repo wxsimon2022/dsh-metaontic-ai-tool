@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This repository is the `dsh` Host and browser plugin for the MetaOntic AI management tool, built on open-source New API. TypeScript sources live in `src/`: `index.ts` contains the login/query routes, validation, upstream requests, sanitized mapping, and profile-local login storage; `client.ts` registers the sidebar icon and main panel. `src/types/dsh.d.ts` declares the browser-side host APIs. `tsc` emits runtime files to `dist/`; `package.json` exports those files. `cordis.patch.yml` mounts the bundle, and metadata lives in `locale/`.
+This repository is the `dsh` Host and browser plugin for the MetaOntic AI multi-model aggregation platform, built on open-source New API. TypeScript sources live in `src/`: `index.ts` contains the login/query routes, validation, upstream requests, sanitized mapping, and profile-local login storage; `client.ts` registers the sidebar icon and main panel. `src/types/dsh.d.ts` declares the browser-side host APIs. `tsc` emits runtime files to `dist/`; `package.json` exports those files. `cordis.patch.yml` mounts the bundle, and metadata lives in `locale/`.
 
 ## Build, Test, and Development Commands
 
@@ -11,8 +11,8 @@ This repository is the `dsh` Host and browser plugin for the MetaOntic AI manage
 - `npm run check` runs type checking and validates test syntax.
 - `npm test` builds, then runs the offline `node:test` suite against `dist/`.
 - `npm run pack:check` verifies the published file list.
-- `npm pack` creates `dsh-metaontic-ai-tool-0.0.1.tgz`.
-- `dsh plugin --profile desktop add ./dsh-metaontic-ai-tool-0.0.1.tgz` installs it locally.
+- `npm pack` creates `dsh-metaontic-ai-tool-0.0.2.tgz`.
+- `dsh plugin --profile desktop add ./dsh-metaontic-ai-tool-0.0.2.tgz` installs it locally.
 
 Use Node.js 20 or newer. Run `npm install`, `npm run check`, and `npm test` before submitting changes. Never edit `dist/` by hand; it is generated and ignored by Git.
 

@@ -3,6 +3,7 @@ const NS = 'sidebar.metaonticAiTool';
 const QUERY_PATH = '/api/dsh-metaontic-ai-tool.query';
 const SESSION_PATH = '/api/dsh-metaontic-ai-tool.session';
 const DEFAULT_BASE_URL = 'https://ai.bileego.com/';
+const REGISTER_URL = 'https://ai.bileego.com/sign-up?aff=VzYr';
 
 const zh = {
   sidebarLabel: 'MetaOntic AI',
@@ -15,6 +16,8 @@ const zh = {
   tokenPrivacy: '登录成功后，访问令牌由 Host 保存在本机 profile 的私有文件中，浏览器不保存令牌。',
   login: '访问令牌登录',
   loginPending: '正在验证访问令牌…',
+  registerPrompt: '还没有访问令牌？',
+  registerNow: '注册账号',
   restoringLogin: '正在恢复本机登录…',
   savedLogin: '登录信息已保存到本机',
   notPersisted: '登录成功，但登录信息未能保存到本机。',
@@ -66,6 +69,8 @@ const en = {
   tokenPrivacy: 'After sign-in, the Host stores the token in a private local profile file. The browser does not store it.',
   login: 'Sign in with access token',
   loginPending: 'Verifying access token…',
+  registerPrompt: 'Need an access token?',
+  registerNow: 'Create account',
   restoringLogin: 'Restoring saved local login…',
   savedLogin: 'Login saved on this device',
   notPersisted: 'Signed in, but the login could not be saved on this device.',
@@ -120,11 +125,14 @@ const PANEL_CSS = `
   .mat-input{box-sizing:border-box;width:100%;min-width:0;height:38px;border:1px solid var(--dsw-alias-border-l1,#d9dee6);border-radius:9px;background:var(--dsw-alias-bg-layer-1,#fff);color:inherit;padding:0 11px;font:inherit;outline:none}
   .mat-input:focus{border-color:var(--dsw-alias-brand-primary,#2563eb);box-shadow:0 0 0 2px color-mix(in srgb,var(--dsw-alias-brand-primary,#2563eb) 14%,transparent)}
   .mat-hint{margin:0;color:var(--dsw-alias-label-secondary,#67707c);font-size:11.5px;line-height:1.55}
+  .mat-register{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
   .mat-btn{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;border:1px solid var(--dsw-alias-border-l1,#d9dee6);border-radius:9px;background:var(--dsw-alias-bg-layer-1,#fff);color:inherit;padding:0 14px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap}
   .mat-btn:hover{background:var(--dsw-alias-bg-layer-2,#f5f7fa)}
   .mat-btn:disabled{cursor:not-allowed;opacity:.55}
   .mat-btn-primary{border-color:transparent;background:var(--dsw-alias-brand-primary,#2563eb);color:#fff}
   .mat-btn-primary:hover{background:color-mix(in srgb,var(--dsw-alias-brand-primary,#2563eb) 88%,#000)}
+  .mat-btn-register{border-color:color-mix(in srgb,var(--dsw-alias-brand-primary,#2563eb) 32%,transparent);background:color-mix(in srgb,var(--dsw-alias-brand-primary,#2563eb) 7%,transparent);color:var(--dsw-alias-brand-primary,#2563eb);text-decoration:none}
+  .mat-btn-register:hover{background:color-mix(in srgb,var(--dsw-alias-brand-primary,#2563eb) 13%,transparent)}
   .mat-actions{display:flex;flex-wrap:wrap;align-items:center;gap:9px}
   .mat-actions .mat-btn-primary{flex:1 1 210px}
   .mat-error{display:flex;gap:8px;align-items:flex-start;border-radius:9px;background:color-mix(in srgb,var(--dsw-alias-state-error-primary,#c62828) 8%,transparent);color:var(--dsw-alias-state-error-primary,#c62828);padding:9px 11px;font-size:12px;line-height:1.55}
@@ -377,6 +385,19 @@ function createPanel(React: ReactLike, h: HFunction, t: DshTranslate) {
         ]),
         h('p', { key: 'hint', className: 'mat-hint' }, t('accessTokenHint')),
         h('p', { key: 'privacy', className: 'mat-hint' }, t('tokenPrivacy')),
+        !token.trim() && !pending
+          ? h('div', { key: 'register', className: 'mat-register' }, [
+            h('span', { key: 'prompt', className: 'mat-hint' }, t('registerPrompt')),
+            h('a', {
+              key: 'link',
+              className: 'mat-btn mat-btn-register',
+              href: REGISTER_URL,
+              target: '_blank',
+              rel: 'noopener noreferrer',
+              referrerPolicy: 'no-referrer',
+            }, t('registerNow')),
+          ])
+          : null,
       ]),
       error ? h('div', { key: 'error', className: 'mat-error', role: 'alert' }, error) : null,
       h('div', { key: 'actions', className: 'mat-actions' }, h('button', {

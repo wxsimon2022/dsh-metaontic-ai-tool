@@ -1,7 +1,7 @@
 {
   "name": "dsh-metaontic-ai-tool",
-  "version": "0.0.1",
-  "description": "基于开源 New API 的 MetaOntic AI 管理工具，支持访问令牌登录与平台查询。",
+  "version": "0.0.2",
+  "description": "MetaOntic AI 多模型聚合平台的 dsh 管理插件，支持访问令牌登录与平台查询。",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
