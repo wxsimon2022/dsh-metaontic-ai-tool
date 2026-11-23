@@ -114,6 +114,14 @@ test('keeps installed plugin titles concise', () => {
   assert.match(en.meta.description, /model plaza/i);
 });
 
+test('publishes the MetaOntic plugin icon', () => {
+  const icon = readFileSync(new URL('icon.svg', root), 'utf8');
+
+  assert.match(icon, /viewBox="0 0 64 64"/);
+  assert.match(icon, /aria-label="MetaOntic AI"/);
+  assert.match(icon, /<circle cx="32" cy="32" r="28"/);
+});
+
 test('keeps packed archives out of the repository root', () => {
   const npmrc = readFileSync(new URL('.npmrc', root), 'utf8');
 
