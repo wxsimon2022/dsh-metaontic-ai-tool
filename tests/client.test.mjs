@@ -138,6 +138,13 @@ test('keeps the API key list independently scrollable', async () => {
   assert.match(code, /\.mat-key-actions\{[^}]*margin-top:6px/);
 });
 
+test('keeps the model plaza independently scrollable', async () => {
+  const code = await readFile(new URL('../dist/client.js', import.meta.url), 'utf8');
+  assert.match(code, /\.mat-model-list\{[^}]*max-height:[^;]+;[^}]*overflow-y:auto/);
+  assert.match(code, /\.mat-model-list\{[^}]*overscroll-behavior:contain/);
+  assert.match(code, /\.mat-model-list\{[^}]*touch-action:pan-y/);
+});
+
 test('shows the registration link only while the access token is empty', async () => {
   const code = await readFile(new URL('../dist/client.js', import.meta.url), 'utf8');
   let registration;
