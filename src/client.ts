@@ -12,7 +12,7 @@ window.__ModuleLoader__.load({
     return {
       inject: ['slots', 'locale'],
       apply(ctx: DshClientContext) {
-        ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'dsh-metaontic-ai-tool: dictionaries');
+        ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'dsh-metaontic-newapi-lite: dictionaries');
         const t = ctx.locale.bind(NS);
         const runtime = { React, h, t };
         const Dashboard = createDashboard(runtime);
@@ -23,12 +23,12 @@ window.__ModuleLoader__.load({
           order: 40,
           locale: NS,
           label: () => t('sidebarLabel'),
-        }, PanelIconView)), 'dsh-metaontic-ai-tool: sidebar entry');
+        }, PanelIconView)), 'dsh-metaontic-newapi-lite: sidebar entry');
         ctx.effect(() => ctx.slots.inject('main', () => ctx.slots.register({
           name: 'main',
           key: PANEL_ID,
           locale: NS,
-        }, Dashboard)), 'dsh-metaontic-ai-tool: main panel');
+        }, Dashboard)), 'dsh-metaontic-newapi-lite: main panel');
       },
     };
   },

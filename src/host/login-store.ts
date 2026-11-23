@@ -1,7 +1,7 @@
 import { access, chmod, mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { STORAGE_DIR_NAME, STORAGE_FILE_NAME } from './constants.js';
+import { LEGACY_STORAGE_DIR_NAME, STORAGE_DIR_NAME, STORAGE_FILE_NAME } from './constants.js';
 import { hasErrorCode, isRecord, QueryError } from './errors.js';
 import { normalizeAccessToken, normalizeBaseUrl } from './http.js';
 import type { LoginRecord, LoginStore, LoginStoreOptions, PluginContext } from './types.js';
@@ -39,6 +39,28 @@ async function resolveStorageDirectory({ ctx, moduleUrl }: { ctx?: PluginContext
   throw new QueryError('STORAGE_UNAVAILABLE', '无法确定本机登录信息的保存位置。', 500);
 }
 
+function parseLogin(text: string): LoginRecord | null {
+  try {
+    const saved: unknown = JSON.parse(text);
+    if (!isRecord(saved)) return null;
+    return {
+      baseUrl: normalizeBaseUrl(saved?.baseUrl),
+      accessToken: normalizeAccessToken(saved?.accessToken),
+      savedAt: typeof saved?.savedAt === 'string' ? saved.savedAt : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function readLogin(path: string): Promise<LoginRecord | null> {
+  try {
+    return parseLogin(await readFile(path, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
 export function createLoginStore({ ctx, directory, moduleUrl = import.meta.url }: LoginStoreOptions = {}): LoginStore {
   let directoryPromise: Promise<string> | undefined;
 
@@ -56,7 +78,7 @@ export function createLoginStore({ ctx, directory, moduleUrl = import.meta.url }
     return join(await storageDirectory(), STORAGE_FILE_NAME);
   }
 
-  return {
+  const store: LoginStore = {
     async save(baseUrl: unknown, accessToken: unknown): Promise<void> {
       const path = await filePath();
       const temporary = `${path}.${process.pid}.${Date.now()}.tmp`;
@@ -77,18 +99,14 @@ export function createLoginStore({ ctx, directory, moduleUrl = import.meta.url }
     },
 
     async load(): Promise<LoginRecord | null> {
-      try {
-        const text = await readFile(await filePath(), 'utf8');
-        const saved: unknown = JSON.parse(text);
-        if (!isRecord(saved)) return null;
-        return {
-          baseUrl: normalizeBaseUrl(saved?.baseUrl),
-          accessToken: normalizeAccessToken(saved?.accessToken),
-          savedAt: typeof saved?.savedAt === 'string' ? saved.savedAt : undefined,
-        };
-      } catch {
-        return null;
-      }
+      const path = await filePath();
+      const current = await readLogin(path);
+      if (current) return current;
+      if (directory) return null;
+      const legacy = await readLogin(join(dirname(dirname(path)), LEGACY_STORAGE_DIR_NAME, STORAGE_FILE_NAME));
+      if (!legacy) return null;
+      await store.save(legacy.baseUrl, legacy.accessToken).catch(() => {});
+      return legacy;
     },
 
     async clear() {
@@ -97,6 +115,11 @@ export function createLoginStore({ ctx, directory, moduleUrl = import.meta.url }
       } catch (error) {
         if (!hasErrorCode(error) || error.code !== 'ENOENT') throw error;
       }
+      if (!directory) {
+        const path = await filePath();
+        await unlink(join(dirname(dirname(path)), LEGACY_STORAGE_DIR_NAME, STORAGE_FILE_NAME)).catch(() => {});
+      }
     },
   };
+  return store;
 }

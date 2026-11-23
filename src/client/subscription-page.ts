@@ -1,5 +1,5 @@
 import { SUBSCRIPTION_PATH } from './constants.js';
-import { currency, formatNumber, formatPercent, formatQuota } from './runtime.js';
+import { currency, formatNumber, formatPercent, formatQuota, paymentCurrency } from './runtime.js';
 import type {
   CardProps,
   ClientRuntime,
@@ -15,7 +15,9 @@ import type {
 } from './runtime.js';
 
 function planPrice(plan: SubscriptionPlan, platform?: PlatformInfo): string {
-  return `${currency(platform).symbol}${formatNumber(plan.priceAmount)}`;
+  const code = String(plan.currency || '').toUpperCase();
+  const symbol = code === 'USD' ? '$' : code === 'CNY' ? '¥' : code === 'EUR' ? '€' : currency(platform).symbol;
+  return `${symbol}${formatNumber(plan.priceAmount)}`;
 }
 
 function dateTime(value: unknown, fallback: string): string {
@@ -294,7 +296,7 @@ export function createSubscriptionPage({ React, h, t }: ClientRuntime) {
       payment?.payUrl ? h('div', { key: 'payment', className: 'mat-pay-result' }, [
         payment.payMoney ? h('div', { key: 'money', className: 'mat-pay-line' }, [
           h('span', { key: 'label' }, t('subscriptionPayMoney')),
-          h('strong', { key: 'value' }, `${currency(data.platform).symbol}${payment.payMoney}`),
+          h('strong', { key: 'value' }, `${paymentCurrency().symbol}${payment.payMoney}`),
         ]) : null,
         payment.outTradeNo ? h('div', { key: 'order', className: 'mat-pay-line' }, [
           h('span', { key: 'label' }, t('topupOrderNo')),

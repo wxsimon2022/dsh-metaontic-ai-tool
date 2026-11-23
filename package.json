@@ -1,18 +1,18 @@
 {
-  "name": "dsh-metaontic-ai-tool",
+  "name": "dsh-metaontic-newapi-lite",
   "version": "0.0.10",
-  "description": "MetaOntic AI 多模型聚合平台的 DeepSeek Harness 管理插件：访问令牌登录、注册入口、余额与用量查询、API Key 管理、订阅与充值。",
+  "description": "MetaOntic模型中转助手：DeepSeek Harness 的 New API / OpenAI 兼容模型中转插件，支持模型广场、API Key 分组管理、订阅充值、余额与用量查询。",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wxsimon2022/dsh-metaontic-ai-tool.git"
+    "url": "git+https://github.com/wxsimon2022/dsh-metaontic-newapi-lite.git"
   },
-  "homepage": "https://github.com/wxsimon2022/dsh-metaontic-ai-tool#readme",
+  "homepage": "https://github.com/wxsimon2022/dsh-metaontic-newapi-lite#readme",
   "bugs": {
-    "url": "https://github.com/wxsimon2022/dsh-metaontic-ai-tool/issues"
+    "url": "https://github.com/wxsimon2022/dsh-metaontic-newapi-lite/issues"
   },
   "publishConfig": {
     "access": "public",
@@ -26,16 +26,25 @@
     "metaontic-ai",
     "metaontic",
     "new-api",
+    "newapi",
     "model-aggregation",
     "model-gateway",
+    "openai-compatible",
+    "llm-gateway",
+    "model-relay",
+    "model-plaza",
+    "model-catalog",
     "access-token-login",
     "api-key-management",
+    "api-key-group",
     "subscription-management",
+    "recharge-payment",
     "account-dashboard",
     "balance-query",
     "usage-query",
     "ai-management",
-    "plugin-market"
+    "plugin-market",
+    "gitee"
   ],
   "exports": {
     ".": {

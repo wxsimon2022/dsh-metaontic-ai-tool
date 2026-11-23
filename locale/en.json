@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "MetaOntic AI Management Tool",
-    "description": "MetaOntic AI is a multi-model aggregation platform offering stable, reliable model services. This DeepSeek Harness plugin supports access-token login, registration, platform status, account balance and usage queries, API key management, and subscription and recharge payment links."
+    "description": "MetaOntic model relay assistant for DeepSeek Harness. Browse the model plaza, manage API key groups, subscriptions, recharge, balance and usage on New API / OpenAI-compatible platforms."
   }
 }

@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { basename } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const repository = 'hackloop/dsh-metaontic-ai-tool';
+const repository = 'hackloop/dsh-metaontic-newapi-lite';
 const apiBase = `https://gitee.com/api/v5/repos/${repository}`;
 
 export async function publishGitee({ token, tag, archive, notes, request = fetch, log = console.log }) {
@@ -43,7 +43,7 @@ export async function publishGitee({ token, tag, archive, notes, request = fetch
       method: 'POST',
       data: {
         tag_name: tag,
-        name: `MetaOntic AI 管理工具 ${tag}`,
+        name: `MetaOntic模型中转助手 ${tag}`,
         body: notes,
         target_commitish: 'master',
         prerelease: 'false',
@@ -54,7 +54,7 @@ export async function publishGitee({ token, tag, archive, notes, request = fetch
       method: 'PATCH',
       data: {
         tag_name: tag,
-        name: `MetaOntic AI 管理工具 ${tag}`,
+        name: `MetaOntic模型中转助手 ${tag}`,
         body: notes,
         prerelease: 'false',
       },

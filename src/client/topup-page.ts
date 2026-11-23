@@ -1,5 +1,5 @@
 import { TOPUP_PATH } from './constants.js';
-import { currency, formatNumber } from './runtime.js';
+import { formatNumber, paymentCurrency, topupAmountCurrency } from './runtime.js';
 import type {
   CardProps,
   ChangeEventLike,
@@ -24,7 +24,8 @@ export function createTopupPage({ React, h, t }: ClientRuntime) {
     const methods = Array.isArray(config?.paymentMethods) ? config.paymentMethods : [];
     const amountOptions = Array.isArray(config?.amountOptions) ? config.amountOptions : [];
     const minTopup = Number(config?.minTopup) || 1;
-    const unit = currency(data.platform);
+    const unit = topupAmountCurrency();
+    const payUnit = paymentCurrency();
 
     async function loadConfig(): Promise<void> {
       setLoading(true);
@@ -57,6 +58,12 @@ export function createTopupPage({ React, h, t }: ClientRuntime) {
     React.useEffect(() => {
       void loadConfig();
     }, [data.baseUrl]);
+
+    React.useEffect(() => {
+      if (!payment?.payUrl || typeof document === 'undefined') return;
+      const node = document.querySelector('.mat-pay-inline');
+      node?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+    }, [payment?.payUrl]);
 
     async function submit(event?: FormEventLike): Promise<void> {
       event?.preventDefault?.();
@@ -100,6 +107,12 @@ export function createTopupPage({ React, h, t }: ClientRuntime) {
       } finally {
         setCreating(false);
       }
+    }
+
+    function restart(): void {
+      setPayment(null);
+      setError('');
+      setNotice('');
     }
 
     const form = config?.onlineTopupEnabled && methods.length > 0
@@ -164,6 +177,29 @@ export function createTopupPage({ React, h, t }: ClientRuntime) {
       ])
       : null;
 
+    const paidMoney = payment?.payMoney ? `${payUnit.symbol}${payment.payMoney}` : '';
+    const paymentPanel = payment?.payUrl ? h('div', { key: 'payment', className: 'mat-topup-pay mat-pay-inline' }, [
+      h('div', { key: 'money', className: 'mat-pay-line' }, [
+        h('span', { key: 'label' }, paidMoney ? t('topupPayMoney') : t('topupAmount')),
+        h('strong', { key: 'value' }, paidMoney || `${unit.symbol}${formatNumber(payment.amount || amount)}`),
+      ]),
+      payment.outTradeNo ? h('div', { key: 'order', className: 'mat-pay-line' }, [
+        h('span', { key: 'label' }, t('topupOrderNo')),
+        h('strong', { key: 'value', className: 'mat-mono' }, payment.outTradeNo),
+      ]) : null,
+      h('div', { key: 'actions', className: 'mat-pay-actions' }, [
+        h('button', { key: 'again', type: 'button', className: 'mat-btn', onClick: restart }, t('topupAgain')),
+        h('a', {
+          key: 'open',
+          className: 'mat-btn mat-btn-primary',
+          href: payment.payUrl,
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          referrerPolicy: 'no-referrer',
+        }, t('topupOpenPayment')),
+      ]),
+    ]) : null;
+
     return h('section', { className: 'mat-card mat-topup' }, [
       h('div', { key: 'head', className: 'mat-card-head' }, [
         h('div', { key: 'copy', className: 'mat-card-head-copy' }, [
@@ -192,28 +228,11 @@ export function createTopupPage({ React, h, t }: ClientRuntime) {
             ? h('div', { key: 'offline', className: 'mat-error', role: 'alert' }, t('topupUnavailable'))
             : methods.length === 0
             ? h('div', { key: 'no-methods', className: 'mat-error', role: 'alert' }, t('topupNoMethods'))
-            : form,
+            : paymentPanel || form,
         ])
         : null,
       error ? h('div', { key: 'error', className: 'mat-error', role: 'alert', style: { marginTop: 12 } }, error) : null,
       notice ? h('div', { key: 'notice', className: 'mat-notice', role: 'status', style: { marginTop: 12 } }, notice) : null,
-      payment?.payUrl ? h('div', { key: 'payment', className: 'mat-pay-result' }, [
-        h('div', { key: 'money', className: 'mat-pay-line' }, [
-          h('span', { key: 'label' }, t('topupPayMoney')),
-          h('strong', { key: 'value' }, payment.payMoney ? `${unit.symbol}${payment.payMoney}` : `${unit.symbol}${formatNumber(payment.amount || amount)}`),
-        ]),
-        payment.outTradeNo ? h('div', { key: 'order', className: 'mat-pay-line' }, [
-          h('span', { key: 'label' }, t('topupOrderNo')),
-          h('strong', { key: 'value', className: 'mat-mono' }, payment.outTradeNo),
-        ]) : null,
-        h('div', { key: 'actions', className: 'mat-pay-actions' }, h('a', {
-          className: 'mat-btn mat-btn-primary',
-          href: payment.payUrl,
-          target: '_blank',
-          rel: 'noopener noreferrer',
-          referrerPolicy: 'no-referrer',
-        }, t('topupOpenPayment'))),
-      ]) : null,
     ]);
   };
 }

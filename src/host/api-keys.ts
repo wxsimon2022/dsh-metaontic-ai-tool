@@ -21,6 +21,12 @@ type ApiKeyField = (typeof API_KEY_FIELDS)[number];
 
 export type ApiKeyInfo = Partial<Record<ApiKeyField, unknown>>;
 
+export interface ApiKeyGroup {
+  name: string;
+  desc: string;
+  ratio: number | null;
+}
+
 export interface CreateApiKeyOptions extends QueryOptions {
   name: unknown;
   unlimitedQuota?: unknown;
@@ -91,16 +97,55 @@ function mapApiKey(value: unknown): ApiKeyInfo | null {
   return { ...pickFields(value, API_KEY_FIELDS), id };
 }
 
-export async function listApiKeys(options: QueryOptions = {}): Promise<{ keys: ApiKeyInfo[]; total: number }> {
+function cleanGroupText(value: unknown, limit: number): string {
+  return String(value ?? '')
+    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, limit);
+}
+
+function mapGroups(value: unknown): ApiKeyGroup[] {
+  if (!isRecord(value)) return [];
+  const groups: ApiKeyGroup[] = [];
+  for (const [rawName, rawGroup] of Object.entries(value)) {
+    if (!isRecord(rawGroup) || Array.isArray(rawGroup)) continue;
+    const name = cleanGroupText(rawName, 64);
+    if (!name || groups.some(group => group.name === name)) continue;
+    const source = rawGroup;
+    const ratio = Number(source.ratio);
+    groups.push({
+      name,
+      desc: cleanGroupText(source.desc, 120),
+      ratio: Number.isFinite(ratio) && ratio >= 0 ? ratio : null,
+    });
+    if (groups.length >= 50) break;
+  }
+  return groups;
+}
+
+async function listGroups(upstream: ReturnType<typeof upstreamOptions>): Promise<ApiKeyGroup[]> {
+  try {
+    const payload = await readJson(endpoint(upstream.baseUrl, 'api/user/self/groups'), upstream);
+    return mapGroups(unwrap(payload));
+  } catch {
+    return [];
+  }
+}
+
+export async function listApiKeys(options: QueryOptions = {}): Promise<{ keys: ApiKeyInfo[]; total: number; groups: ApiKeyGroup[] }> {
   const upstream = upstreamOptions(options);
-  const payload = await readJson(endpoint(upstream.baseUrl, 'api/token/?p=0&size=100'), upstream);
+  const [payload, groups] = await Promise.all([
+    readJson(endpoint(upstream.baseUrl, 'api/token/?p=0&size=100'), upstream),
+    listGroups(upstream),
+  ]);
   const data = unwrap(payload);
   if (!isRecord(data) || !Array.isArray(data.items)) {
     throw new QueryError('INVALID_RESPONSE', '平台返回的 API Key 列表不完整。', 502);
   }
   const keys = data.items.map(mapApiKey).filter((key): key is ApiKeyInfo => key !== null);
   const total = Number(data.total);
-  return { keys, total: Number.isSafeInteger(total) && total >= 0 ? total : keys.length };
+  return { keys, total: Number.isSafeInteger(total) && total >= 0 ? total : keys.length, groups };
 }
 
 export async function createApiKey(options: CreateApiKeyOptions): Promise<{ created: true; name: string }> {

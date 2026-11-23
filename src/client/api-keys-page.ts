@@ -6,9 +6,11 @@ import {
   displayQuotaToUnits,
   expiryTimeFromDays,
   formatQuota,
+  formatNumber,
 } from './runtime.js';
 import type {
   ApiKeyActionPayload,
+  ApiKeyGroup,
   ApiKeyInfo,
   ApiKeySecretPayload,
   ApiKeysPayload,
@@ -32,7 +34,21 @@ export function createApiKeysPage({ React, h, t }: ClientRuntime) {
     const [unlimited, setUnlimited] = React.useState<boolean>(true);
     const [quota, setQuota] = React.useState<string>('');
     const [expiryDays, setExpiryDays] = React.useState<string>('0');
+    const [groups, setGroups] = React.useState<ApiKeyGroup[]>([]);
+    const [group, setGroup] = React.useState<string>('');
     const [revealed, setRevealed] = React.useState<Record<string, string>>({});
+
+    function preferredGroup(list: ApiKeyGroup[]): string {
+      const accountGroup = String(data.account.group || '');
+      if (accountGroup && list.some(item => item.name === accountGroup)) return accountGroup;
+      const fallback = list.find(item => item.name === 'default') || list[0];
+      return fallback?.name || accountGroup;
+    }
+
+    function groupLabel(item: ApiKeyGroup): string {
+      const details = [item.desc, item.ratio !== null ? `${formatNumber(item.ratio)}x` : ''].filter(Boolean);
+      return details.length > 0 ? `${item.name} · ${details.join(' · ')}` : item.name;
+    }
 
     async function loadKeys(showLoading = true): Promise<void> {
       if (showLoading) setLoading(true);
@@ -48,7 +64,10 @@ export function createApiKeysPage({ React, h, t }: ClientRuntime) {
         if (!response.ok || !payload?.ok) {
           throw new Error(payload?.error?.message || t('apiKeyLoadFailed'));
         }
+        const nextGroups = Array.isArray(payload.data?.groups) ? payload.data.groups : [];
         setKeys(Array.isArray(payload.data?.keys) ? payload.data.keys : []);
+        setGroups(nextGroups);
+        setGroup(previous => previous && nextGroups.some(item => item.name === previous) ? previous : preferredGroup(nextGroups));
         setRevealed({});
       } catch (failure) {
         setError(failure instanceof Error && failure.message ? failure.message : t('apiKeyLoadFailed'));
@@ -73,6 +92,7 @@ export function createApiKeysPage({ React, h, t }: ClientRuntime) {
       setUnlimited(true);
       setQuota('');
       setExpiryDays('0');
+      setGroup(preferredGroup(groups));
     }
 
     function closeCreate(): void {
@@ -123,7 +143,7 @@ export function createApiKeysPage({ React, h, t }: ClientRuntime) {
             unlimitedQuota: unlimited,
             remainQuota,
             expiredTime,
-            group: data.account.group,
+            group: group || preferredGroup(groups),
           }),
         });
         let payload: ApiKeyActionPayload;
@@ -330,6 +350,19 @@ export function createApiKeysPage({ React, h, t }: ClientRuntime) {
               disabled: creating,
             }),
             h('span', { key: 'hint', className: 'mat-hint' }, t('apiKeyNeverExpiresHint')),
+          ]),
+          h('label', { key: 'group', className: 'mat-field mat-modal-wide' }, [
+            h('span', { key: 'label', className: 'mat-label' }, t('apiKeyGroup')),
+            h('select', {
+              key: 'select',
+              className: 'mat-input',
+              value: group,
+              onChange: (event: ChangeEventLike) => setGroup(event.target.value),
+              disabled: creating || groups.length === 0,
+            }, groups.length > 0
+              ? groups.map(item => h('option', { key: item.name, value: item.name }, groupLabel(item)))
+              : [h('option', { key: 'account', value: String(data.account.group || '') }, String(data.account.group || t('apiKeyGroup')) )]),
+            h('span', { key: 'hint', className: 'mat-hint' }, t('apiKeyGroupHint')),
           ]),
           h('label', { key: 'unlimited', className: 'mat-key-check mat-modal-wide' }, [
             h('input', {

@@ -8,6 +8,7 @@ import {
 import { DEFAULT_BASE_URL } from './constants.js';
 import { errorResponse, readRequestBody } from './http.js';
 import { isRecord, QueryError } from './errors.js';
+import { listModels } from './models.js';
 import { queryPlatform } from './platform.js';
 import { createSubscriptionPayment, getSubscriptionInfo } from './subscription.js';
 import { createTopup, getTopupInfo } from './topup.js';
@@ -55,6 +56,15 @@ interface SubscriptionService {
 export interface SubscriptionHandlerOptions {
   store?: LoginStore | null;
   service?: Partial<SubscriptionService>;
+}
+
+interface ModelService {
+  list: typeof listModels;
+}
+
+export interface ModelHandlerOptions {
+  store?: LoginStore | null;
+  service?: Partial<ModelService>;
 }
 
 export function createQueryHandler({ store, query = queryPlatform }: QueryHandlerOptions = {}) {
@@ -143,6 +153,10 @@ const defaultTopupService: TopupService = {
 const defaultSubscriptionService: SubscriptionService = {
   info: getSubscriptionInfo,
   create: createSubscriptionPayment,
+};
+
+const defaultModelService: ModelService = {
+  list: listModels,
 };
 
 async function requireSavedLogin(store?: LoginStore | null, message = '请先登录后再管理 API Key。'): Promise<LoginRecord> {
@@ -248,6 +262,28 @@ export function createSubscriptionHandler({ store, service }: SubscriptionHandle
       } else {
         throw new QueryError('METHOD_NOT_ALLOWED', '不支持的请求方法。', 405);
       }
+      return Response.json({ ok: true, data }, {
+        headers: { 'cache-control': 'no-store' },
+      });
+    } catch (error) {
+      if (error instanceof QueryError && error.code === 'AUTH_FAILED' && store) {
+        await store.clear().catch(() => {});
+      }
+      return errorResponse(error);
+    }
+  };
+}
+
+export function createModelsHandler({ store, service }: ModelHandlerOptions = {}) {
+  const api = { ...defaultModelService, ...service };
+
+  return async function handleModelsRequest(request: Request): Promise<Response> {
+    try {
+      const saved = await requireSavedLogin(store, '请先登录后再查看模型广场。');
+      if (request.method !== 'GET') {
+        throw new QueryError('METHOD_NOT_ALLOWED', '不支持的请求方法。', 405);
+      }
+      const data = await api.list(saved);
       return Response.json({ ok: true, data }, {
         headers: { 'cache-control': 'no-store' },
       });

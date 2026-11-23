@@ -94,7 +94,7 @@ test('loads the compiled browser client as a classic script', async () => {
   };
   vm.runInNewContext(code, { window, console, URL, setTimeout, clearTimeout, fetch });
 
-  assert.equal(registration?.id, 'dsh-metaontic-ai-tool');
+  assert.equal(registration?.id, 'dsh-metaontic-newapi-lite');
   const React = {
     Fragment: Symbol('Fragment'),
     createElement() {},
@@ -133,7 +133,7 @@ test('keeps the API key list independently scrollable', async () => {
   const code = await readFile(new URL('../dist/client.js', import.meta.url), 'utf8');
   assert.match(code, /\.mat-key-list\{[^}]*max-height:[^;]+;[^}]*overflow-y:auto/);
   assert.match(code, /\.mat-key-item\{[^}]*flex:0 0 auto/);
-  assert.match(code, /\.mat-key-item\{[^}]*padding:8px 10px/);
+  assert.match(code, /\.mat-key-item\{[^}]*padding:10px 12px/);
   assert.match(code, /\.mat-key-meta\{[^}]*display:flex/);
   assert.match(code, /\.mat-key-actions\{[^}]*margin-top:6px/);
 });
@@ -282,6 +282,7 @@ test('shows remaining quota with a matching progress width', async () => {
 test('lists API keys masked and reveals one only on request', async () => {
   const code = await readFile(new URL('../dist/client.js', import.meta.url), 'utf8');
   let registration;
+  let capturedCreate;
   const window = {
     __ModuleLoader__: {
       load(options) {
@@ -292,7 +293,7 @@ test('lists API keys masked and reveals one only on request', async () => {
   const fetch = async (url, init = {}) => {
     const target = String(url);
     const method = String(init.method || 'GET').toUpperCase();
-    if (target.endsWith('/api/dsh-metaontic-ai-tool.session')) {
+    if (target.endsWith('/api/dsh-metaontic-newapi-lite.session')) {
       return {
         ok: true,
         json: async () => ({
@@ -307,13 +308,17 @@ test('lists API keys masked and reveals one only on request', async () => {
         }),
       };
     }
-    if (target.endsWith('/api/dsh-metaontic-ai-tool.api-keys') && method === 'GET') {
+    if (target.endsWith('/api/dsh-metaontic-newapi-lite.api-keys') && method === 'GET') {
       return {
         ok: true,
         json: async () => ({
           ok: true,
           data: {
             total: 1,
+            groups: [
+              { name: 'default', desc: '默认分组', ratio: 1 },
+              { name: 'ds-75', desc: '用户分组', ratio: 0.75 },
+            ],
             keys: [{
               id: 7,
               name: 'dsh-desktop',
@@ -328,7 +333,14 @@ test('lists API keys masked and reveals one only on request', async () => {
         }),
       };
     }
-    if (target.endsWith('/api/dsh-metaontic-ai-tool.api-keys') && method === 'PUT') {
+    if (target.endsWith('/api/dsh-metaontic-newapi-lite.api-keys') && method === 'POST') {
+      capturedCreate = JSON.parse(init.body);
+      return {
+        ok: true,
+        json: async () => ({ ok: true, data: { created: true, name: capturedCreate.name } }),
+      };
+    }
+    if (target.endsWith('/api/dsh-metaontic-newapi-lite.api-keys') && method === 'PUT') {
       return {
         ok: true,
         json: async () => ({ ok: true, data: { id: 7, key: 'sk-explicit-reveal' } }),
@@ -411,10 +423,35 @@ test('lists API keys masked and reveals one only on request', async () => {
   assert.equal(dialog.props['aria-modal'], 'true');
   assert.match(String(dialog.props.className), /mat-modal/);
   assert.ok(nodes.some(node => node.props?.className === 'mat-modal-backdrop'));
+  const groupSelect = nodes.find(node => node.type === 'select');
+  assert.ok(groupSelect);
+  assert.equal(groupSelect.props.value, 'default');
   const closeDialog = nodes.find(node => node.type === 'button' && node.props?.['aria-label'] === 'apiKeyCancel');
   assert.ok(closeDialog);
   closeDialog.props.onClick();
   nodes = render();
+  assert.equal(nodes.some(node => node.props?.role === 'dialog'), false);
+
+  const reopenKey = nodes.find(node => node.type === 'button' && node.props?.children?.[0] === 'apiKeyNew');
+  assert.ok(reopenKey);
+  reopenKey.props.onClick();
+  nodes = render();
+  const nameInput = nodes.find(node => node.type === 'input' && node.props?.placeholder === 'apiKeyNamePlaceholder');
+  assert.ok(nameInput);
+  nameInput.props.onChange({ target: { value: 'grouped-key' } });
+  nodes = render();
+  const select = nodes.find(node => node.type === 'select');
+  assert.ok(select);
+  select.props.onChange({ target: { value: 'ds-75' } });
+  nodes = render();
+  const groupDialog = nodes.find(node => node.type === 'form' && node.props?.role === 'dialog');
+  assert.ok(groupDialog);
+  await groupDialog.props.onSubmit({ preventDefault() {} });
+  await new Promise(resolve => setImmediate(resolve));
+  nodes = render();
+
+  assert.equal(capturedCreate.name, 'grouped-key');
+  assert.equal(capturedCreate.group, 'ds-75');
   assert.equal(nodes.some(node => node.props?.role === 'dialog'), false);
 });
 
@@ -432,7 +469,7 @@ test('keeps recharge on the overview page and shows a signed payment link', asyn
   const fetch = async (url, init = {}) => {
     const target = String(url);
     const method = String(init.method || 'GET').toUpperCase();
-    if (target.endsWith('/api/dsh-metaontic-ai-tool.session')) {
+    if (target.endsWith('/api/dsh-metaontic-newapi-lite.session')) {
       return {
         ok: true,
         json: async () => ({
@@ -447,7 +484,7 @@ test('keeps recharge on the overview page and shows a signed payment link', asyn
         }),
       };
     }
-    if (target.endsWith('/api/dsh-metaontic-ai-tool.topup') && method === 'GET') {
+    if (target.endsWith('/api/dsh-metaontic-newapi-lite.topup') && method === 'GET') {
       return {
         ok: true,
         json: async () => ({
@@ -461,7 +498,7 @@ test('keeps recharge on the overview page and shows a signed payment link', asyn
         }),
       };
     }
-    if (target.endsWith('/api/dsh-metaontic-ai-tool.topup') && method === 'POST') {
+    if (target.endsWith('/api/dsh-metaontic-newapi-lite.topup') && method === 'POST') {
       capturedPayment = JSON.parse(init.body);
       return {
         ok: true,
@@ -518,10 +555,15 @@ test('keeps recharge on the overview page and shows a signed payment link', asyn
   nodes = render();
   assert.ok(nodes.some(node => node.props?.className === 'mat-card mat-overview'));
   assert.ok(nodes.some(node => node.props?.className === 'mat-card mat-topup'));
+  assert.deepEqual(
+    nodes.filter(node => node.props?.role === 'tab').map(node => node.props?.children?.[0]),
+    ['overviewPage', 'subscription', 'modelsPage', 'apiKeys'],
+  );
   assert.equal(nodes.some(node => node.type === 'button' && node.props?.children?.[0] === 'topup'), false);
   assert.equal(nodes.some(node => node.props?.className === 'mat-key-item'), false);
   const amountInput = nodes.find(node => node.type === 'input' && node.props?.type === 'number');
   assert.ok(amountInput);
+  assert.ok(nodes.some(node => node.type === 'button' && node.props?.children?.[0] === '$20'));
   amountInput.props.onChange({ target: { value: '20' } });
   nodes = render();
   const form = nodes.find(node => node.type === 'form' && node.props?.className === 'mat-topup-grid');
@@ -532,6 +574,10 @@ test('keeps recharge on the overview page and shows a signed payment link', asyn
 
   assert.deepEqual(capturedPayment, { amount: 20, paymentMethod: 'wxpay' });
   assert.ok(nodes.some(node => node.props?.className === 'mat-notice' && node.props.children?.[0] === 'topupCreated'));
+  assert.equal(nodes.some(node => node.type === 'form' && node.props?.className === 'mat-topup-grid'), false);
+  assert.ok(nodes.some(node => node.props?.className === 'mat-topup-pay mat-pay-inline'));
+  assert.ok(nodes.some(node => node.type === 'button' && node.props?.children?.[0] === 'topupAgain'));
+  assert.equal(JSON.stringify(nodes).includes('¥14.60'), true);
   const payLink = nodes.find(node => node.type === 'a' && String(node.props?.className || '').includes('mat-btn-primary'));
   assert.equal(payLink?.props.href, 'https://pay.example.com/submit.php?sign=abc123&type=wxpay');
   assert.equal(payLink?.props.target, '_blank');
@@ -552,7 +598,7 @@ test('shows subscriptions on their own page and creates a signed subscription li
   const fetch = async (url, init = {}) => {
     const target = String(url);
     const method = String(init.method || 'GET').toUpperCase();
-    if (target.endsWith('/api/dsh-metaontic-ai-tool.session')) {
+    if (target.endsWith('/api/dsh-metaontic-newapi-lite.session')) {
       return {
         ok: true,
         json: async () => ({
@@ -567,7 +613,7 @@ test('shows subscriptions on their own page and creates a signed subscription li
         }),
       };
     }
-    if (target.endsWith('/api/dsh-metaontic-ai-tool.subscription') && method === 'GET') {
+    if (target.endsWith('/api/dsh-metaontic-newapi-lite.subscription') && method === 'GET') {
       return {
         ok: true,
         json: async () => ({
@@ -611,7 +657,7 @@ test('shows subscriptions on their own page and creates a signed subscription li
         }),
       };
     }
-    if (target.endsWith('/api/dsh-metaontic-ai-tool.subscription') && method === 'POST') {
+    if (target.endsWith('/api/dsh-metaontic-newapi-lite.subscription') && method === 'POST') {
       capturedPayment = JSON.parse(init.body);
       return {
         ok: true,
@@ -690,4 +736,131 @@ test('shows subscriptions on their own page and creates a signed subscription li
   assert.equal(payLink?.props.href, 'https://pay.example.com/submit.php?sign=sub123&type=wxpay');
   assert.equal(payLink?.props.target, '_blank');
   assert.equal(payLink?.props.rel, 'noopener noreferrer');
+});
+
+test('shows the model plaza and filters models by search and group', async () => {
+  const code = await readFile(new URL('../dist/client.js', import.meta.url), 'utf8');
+  let registration;
+  const window = {
+    __ModuleLoader__: {
+      load(options) {
+        registration = options;
+      },
+    },
+  };
+  const fetch = async (url, init = {}) => {
+    const target = String(url);
+    const method = String(init.method || 'GET').toUpperCase();
+    if (target.endsWith('/api/dsh-metaontic-newapi-lite.session')) {
+      return {
+        ok: true,
+        json: async () => ({
+          ok: true,
+          data: {
+            authenticated: true,
+            baseUrl: 'https://ai.bileego.com',
+            fetchedAt: '2026-11-23T08:00:00.000Z',
+            platform: { quota_per_unit: 500000, quota_display_type: 'CNY', usd_exchange_rate: 7.3 },
+            account: { quota: 1000, used_quota: 0, group: 'default', status: 1 },
+          },
+        }),
+      };
+    }
+    if (target.endsWith('/api/dsh-metaontic-newapi-lite.models') && method === 'GET') {
+      return {
+        ok: true,
+        json: async () => ({
+          ok: true,
+          data: {
+            groups: ['default', 'vip'],
+            models: [{
+              name: 'deepseekv4pro',
+              description: 'DeepSeek V4 pro',
+              tags: ['chat', 'reasoning'],
+              icon: 'DeepSeek.Color',
+              groups: ['default', 'vip'],
+              endpoints: ['openai'],
+              ratio: 37.5,
+              price: 0,
+              completionRatio: 1,
+            }, {
+              name: 'GLM-5.3',
+              description: 'Coding model',
+              tags: ['coding'],
+              icon: 'Zhipu.Color',
+              groups: ['default'],
+              endpoints: ['openai'],
+              ratio: 1.5,
+              price: 0,
+              completionRatio: 1,
+            }],
+          },
+        }),
+      };
+    }
+    throw new Error(`unexpected request: ${method} ${target}`);
+  };
+  vm.runInNewContext(code, { window, console, URL, setTimeout, clearTimeout, fetch });
+
+  const { React, render: renderTree } = createReactHarness();
+  const client = registration.factory(() => React);
+  let Dashboard;
+  client.apply({
+    effect(callback) {
+      callback();
+    },
+    locale: {
+      register() {},
+      bind() {
+        return key => key;
+      },
+    },
+    slots: {
+      inject(_slot, callback) {
+        callback();
+      },
+      register(definition, component) {
+        if (definition.name === 'main') Dashboard = component;
+      },
+    },
+  });
+
+  function render() {
+    return renderTree(Dashboard);
+  }
+
+  render();
+  await new Promise(resolve => setImmediate(resolve));
+  let nodes = render();
+  const modelsTab = nodes.find(node => node.type === 'button' && node.props?.children?.[0] === 'modelsPage');
+  assert.ok(modelsTab);
+  modelsTab.props.onClick();
+  render();
+  await new Promise(resolve => setImmediate(resolve));
+  render();
+  await new Promise(resolve => setImmediate(resolve));
+  nodes = render();
+
+  assert.ok(nodes.some(node => node.props?.className === 'mat-card mat-models'));
+  assert.ok(nodes.some(node => node.props?.children?.[0] === 'deepseekv4pro'));
+  assert.ok(nodes.some(node => node.props?.children?.[0] === 'GLM-5.3'));
+  assert.ok(nodes.some(node => node.props?.className === 'mat-model-desc' && node.props?.children?.[0] === 'DeepSeek V4 pro'));
+  assert.equal(nodes.some(node => node.props?.className === 'mat-key-item'), false);
+
+  const search = nodes.find(node => node.type === 'input' && node.props?.type === 'search');
+  assert.ok(search);
+  search.props.onChange({ target: { value: 'GLM' } });
+  nodes = render();
+  assert.ok(nodes.some(node => node.props?.children?.[0] === 'GLM-5.3'));
+  assert.equal(nodes.some(node => node.props?.children?.[0] === 'deepseekv4pro'), false);
+
+  search.props.onChange({ target: { value: '' } });
+  render();
+  nodes = render();
+  const group = nodes.find(node => node.type === 'select');
+  assert.ok(group);
+  group.props.onChange({ target: { value: 'vip' } });
+  nodes = render();
+  assert.ok(nodes.some(node => node.props?.children?.[0] === 'deepseekv4pro'));
+  assert.equal(nodes.some(node => node.props?.children?.[0] === 'GLM-5.3'), false);
 });

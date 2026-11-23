@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "MetaOntic AI 管理工具",
-    "description": "MetaOntic AI 是多模型聚合平台，提供稳定可靠的模型服务。该 DeepSeek Harness 插件支持访问令牌登录、注册入口、平台状态、账户余额与用量查询、API Key 管理，以及订阅与充值支付链接生成。"
+    "title": "MetaOntic模型中转助手",
+    "description": "MetaOntic模型中转助手是 DeepSeek Harness 的 New API / OpenAI 兼容插件，支持模型广场、API Key 分组管理、订阅充值、余额与用量查询。"
   }
 }

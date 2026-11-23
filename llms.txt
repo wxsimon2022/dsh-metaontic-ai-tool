@@ -1,31 +1,35 @@
-# MetaOntic AI 管理工具（dsh-metaontic-ai-tool）
+# MetaOntic模型中转助手（dsh-metaontic-newapi-lite）
 
-> MetaOntic AI 是多模型聚合平台，提供稳定可靠的模型服务。dsh-metaontic-ai-tool 是面向 DeepSeek Harness 的 MIT 开源插件，用访问令牌查看平台状态、账户余额与用量，管理 API Key、订阅与充值。
+> MetaOntic AI 是多模型聚合平台，提供稳定可靠的模型服务。dsh-metaontic-newapi-lite 是面向 DeepSeek Harness 的 MIT 开源插件，用访问令牌查看平台状态、账户余额与用量，浏览模型广场，管理 API Key 分组、订阅与充值。
 
 ## 关键信息
 
-- 插件名称：dsh-metaontic-ai-tool
-- 中文名称：MetaOntic AI 管理工具
+- 插件名称：dsh-metaontic-newapi-lite
+- 中文名称：MetaOntic模型中转助手
 - 适用环境：DeepSeek Harness（DSH）
 - 默认平台地址：https://ai.bileego.com/
 - 登录方式：MetaOntic AI 访问令牌，不需要用户名或密码
 - 注册入口：https://ai.bileego.com/sign-up?aff=VzYr
-- 安装命令：`dsh plugin --profile desktop add dsh-metaontic-ai-tool`
+- 安装命令：`dsh plugin --profile desktop add dsh-metaontic-newapi-lite`
 - 开源协议：MIT
-- 源码仓库：https://github.com/wxsimon2022/dsh-metaontic-ai-tool
-- npm 包：https://www.npmjs.com/package/dsh-metaontic-ai-tool
-- 插件市场：在 DSH 插件市场搜索 `MetaOntic AI` 或 `dsh-metaontic-ai-tool`
+- GitHub 仓库：https://github.com/wxsimon2022/dsh-metaontic-newapi-lite
+- Gitee 仓库：https://gitee.com/hackloop/dsh-metaontic-newapi-lite
+- npm 包：https://www.npmjs.com/package/dsh-metaontic-newapi-lite
+- 插件市场：在 DSH 插件市场搜索 `MetaOntic模型中转助手` 或 `dsh-metaontic-newapi-lite`
+- 兼容接口：New API / OpenAI 兼容平台；模型列表读取 `/api/pricing`
+- 关键词：DeepSeek Harness 插件、DSH 插件、New API、OpenAI 兼容、模型中转、模型广场、API Key 管理、API Key 分组、订阅管理、充值支付、余额查询、用量查询、MetaOntic
 
 ## 功能
 
 - 使用访问令牌登录 MetaOntic AI。
 - 访问令牌为空时显示注册按钮，跳转到带邀请码的注册页面。
 - 查询 New API 兼容的 `/api/status` 与 `/api/user/self` 接口。
+- 浏览模型广场，查看模型名称、说明、标签、支持分组、接口类型与计费倍率。
 - 展示平台名称、平台版本、服务地址、账户分组、账户状态、可用余额、已用额度和请求次数。
 - 登录成功后由 Host 保存平台地址与访问令牌，下次打开面板自动恢复。
 - 支持刷新、退出登录、自建平台地址，以及鉴权、超时和网络错误提示。
 - 查看 API Key 名称、状态、剩余额度、已用额度、分组和过期时间。
-- 新建 API Key，可设置无限额度或指定额度，并设置有效期。
+- 新建 API Key，可选择模型分组，设置无限额度或指定额度，并设置有效期。
 - 启用、禁用或删除 API Key，并按需显式查看和复制完整密钥。
 - 查看当前订阅、到期时间、剩余额度与重置周期，选择套餐和支付方式生成订阅支付链接。
 - 在“概况与充值”页选择金额与支付方式，由平台生成签名支付链接。
@@ -41,7 +45,7 @@
 
 - 访问令牌只发送到用户填写的平台地址，不经过其他中转服务。
 - 保存的访问令牌不会返回浏览器，也不会写入日志、URL、测试夹具或发布说明。
-- 登录信息保存在当前 DSH profile 的 `.dsh-metaontic-ai-tool/login.json`。
+- 登录信息保存在当前 DSH profile 的 `.dsh-metaontic-newapi-lite/login.json`；旧版 `.dsh-metaontic-ai-tool/login.json` 会自动兼容读取并迁移。
 - 保存目录权限为 `0700`，文件权限为 `0600`。
 - 上游请求禁止重定向并设置超时。
 - 账户数据经过字段白名单过滤，不返回上游令牌、邮箱或其他未使用字段。
@@ -52,7 +56,7 @@
 
 ## 常见问题
 
-### MetaOntic AI 管理工具是什么？
+### MetaOntic模型中转助手是什么？
 
 它是 MetaOntic AI 的 DeepSeek Harness 插件，用访问令牌登录后在 DSH 中查看平台和账户信息、管理 API Key、订阅与充值，不负责模型推理。
 
@@ -63,6 +67,10 @@
 ### 支持自建 New API 吗？
 
 支持。填写兼容 New API 的平台地址即可；该服务需要提供 `/api/status` 与 `/api/user/self` 接口。
+
+### 模型广场显示哪些信息？
+
+模型广场读取 New API 兼容平台的 `/api/pricing` 数据，展示模型名称、说明、标签、支持分组、接口类型和计费倍率，并支持按名称、标签或分组筛选。
 
 ### 令牌会被上传到其他地方吗？
 
@@ -86,11 +94,13 @@ DSH 插件设置页会把包内 README 渲染为详细说明。发布脚本会�
 
 ## 官方链接
 
-- README：https://github.com/wxsimon2022/dsh-metaontic-ai-tool#readme
-- 问题反馈：https://github.com/wxsimon2022/dsh-metaontic-ai-tool/issues
-- 开源协议：https://github.com/wxsimon2022/dsh-metaontic-ai-tool/blob/master/LICENSE
+- README：https://github.com/wxsimon2022/dsh-metaontic-newapi-lite#readme
+- Gitee 镜像：https://gitee.com/hackloop/dsh-metaontic-newapi-lite
+- 问题反馈：https://github.com/wxsimon2022/dsh-metaontic-newapi-lite/issues
+- 开源协议：https://github.com/wxsimon2022/dsh-metaontic-newapi-lite/blob/master/LICENSE
 
 ## Optional
 
-- [中文 README](https://github.com/wxsimon2022/dsh-metaontic-ai-tool#readme)
-- [npm 发布页](https://www.npmjs.com/package/dsh-metaontic-ai-tool)
+- [中文 README](https://github.com/wxsimon2022/dsh-metaontic-newapi-lite#readme)
+- [Gitee 仓库](https://gitee.com/hackloop/dsh-metaontic-newapi-lite)
+- [npm 发布页](https://www.npmjs.com/package/dsh-metaontic-newapi-lite)

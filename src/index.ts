@@ -1,5 +1,6 @@
 import {
   API_KEYS_ROUTE,
+  MODELS_ROUTE,
   QUERY_ROUTE,
   SESSION_ROUTE,
   SUBSCRIPTION_ROUTE,
@@ -7,6 +8,7 @@ import {
 } from './host/constants.js';
 import {
   createApiKeysHandler,
+  createModelsHandler,
   createQueryHandler,
   createSessionHandler,
   createSubscriptionHandler,
@@ -56,8 +58,11 @@ export type {
   SubscriptionPlan,
   SubscriptionRecord,
 } from './host/subscription.js';
+export { listModels } from './host/models.js';
+export type { ModelCatalog, ModelInfo } from './host/models.js';
 export {
   createApiKeysHandler,
+  createModelsHandler,
   createQueryHandler,
   createSessionHandler,
   createSubscriptionHandler,
@@ -65,6 +70,7 @@ export {
 } from './host/handlers.js';
 export type {
   ApiKeyHandlerOptions,
+  ModelHandlerOptions,
   QueryHandlerOptions,
   SessionHandlerOptions,
   SubscriptionHandlerOptions,
@@ -76,7 +82,7 @@ export const inject = ['connection'];
 export function apply(ctx: PluginContext): (() => void) | undefined {
   const connectionFetch = ctx.connection?.fetch;
   if (!connectionFetch?.register) {
-    ctx.logger?.warn?.('[dsh-metaontic-ai-tool] connection.fetch is unavailable');
+    ctx.logger?.warn?.('[dsh-metaontic-newapi-lite] connection.fetch is unavailable');
     return;
   }
   const store = createLoginStore({ ctx });
@@ -110,6 +116,12 @@ export function apply(ctx: PluginContext): (() => void) | undefined {
       methods: ['GET', 'POST'],
       requestBody: 'buffered',
       fetch: createSubscriptionHandler({ store }),
+    }),
+    connectionFetch.register({
+      path: MODELS_ROUTE,
+      methods: ['GET'],
+      requestBody: 'buffered',
+      fetch: createModelsHandler({ store }),
     }),
   ];
   return () => {

@@ -41,11 +41,11 @@ test('Gitee release rejects invalid tags', async () => {
 
 test('Gitee release creates the release and uploads the archive', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'dsh-metaontic-release-'));
-  const archive = join(dir, 'dsh-metaontic-ai-tool-0.0.1.tgz');
+  const archive = join(dir, 'dsh-metaontic-newapi-lite-0.0.1.tgz');
   await writeFile(archive, 'package');
   const calls = [];
   const attachments = [];
-  const notes = 'MetaOntic AI 管理工具 v0.0.1\n';
+  const notes = 'MetaOntic模型中转助手 v0.0.1\n';
 
   const request = async (url, options = {}) => {
     const parsed = new URL(url);
@@ -60,7 +60,7 @@ test('Gitee release creates the release and uploads the archive', async () => {
     }
     if (parsed.pathname.endsWith('/attach_files') && method === 'POST') {
       const bytes = await readFile(archive);
-      attachments.push({ name: 'dsh-metaontic-ai-tool-0.0.1.tgz', size: bytes.length });
+      attachments.push({ name: 'dsh-metaontic-newapi-lite-0.0.1.tgz', size: bytes.length });
       return response({}, 201);
     }
     throw new Error(`unexpected request ${method} ${parsed.pathname}`);
@@ -75,7 +75,7 @@ test('Gitee release creates the release and uploads the archive', async () => {
       request,
       log: () => {},
     });
-    assert.equal(url, 'https://gitee.com/hackloop/dsh-metaontic-ai-tool/releases/tag/v0.0.1');
+    assert.equal(url, 'https://gitee.com/hackloop/dsh-metaontic-newapi-lite/releases/tag/v0.0.1');
     assert.ok(calls.some(call => call.method === 'POST' && call.path.endsWith('/releases')));
     assert.ok(calls.some(call => call.method === 'POST' && call.path.endsWith('/attach_files')));
     assert.equal(attachments[0].size, 7);

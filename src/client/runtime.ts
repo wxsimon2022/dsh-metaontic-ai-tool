@@ -62,6 +62,12 @@ export interface ApiKeyInfo {
   group?: string;
 }
 
+export interface ApiKeyGroup {
+  name: string;
+  desc: string;
+  ratio: number | null;
+}
+
 export interface ApiError {
   code?: string;
   message?: string;
@@ -85,7 +91,30 @@ export interface QueryPayload {
 
 export interface ApiKeysPayload {
   ok?: boolean;
-  data?: { keys?: ApiKeyInfo[]; total?: number };
+  data?: { keys?: ApiKeyInfo[]; total?: number; groups?: ApiKeyGroup[] };
+  error?: ApiError;
+}
+
+export interface ModelInfo {
+  name: string;
+  description: string;
+  tags: string[];
+  icon: string;
+  groups: string[];
+  endpoints: string[];
+  ratio: number | null;
+  price: number | null;
+  completionRatio: number | null;
+}
+
+export interface ModelCatalog {
+  models?: ModelInfo[];
+  groups?: string[];
+}
+
+export interface ModelsPayload {
+  ok?: boolean;
+  data?: ModelCatalog;
   error?: ApiError;
 }
 
@@ -238,7 +267,7 @@ export interface CurrencyUnit {
 }
 
 export type UiStatus = 'restoring' | 'idle' | 'pending' | 'ready';
-export type PanelView = 'overview' | 'subscription' | 'apiKeys';
+export type PanelView = 'overview' | 'models' | 'subscription' | 'apiKeys';
 
 export function formatNumber(value: unknown): string {
   const number = Number(value);
@@ -260,6 +289,14 @@ export function currency(platform?: PlatformInfo): CurrencyUnit {
     };
   }
   return { symbol: '$', code: 'USD', rate: 1 };
+}
+
+export function topupAmountCurrency(): CurrencyUnit {
+  return { symbol: '$', code: 'USD', rate: 1 };
+}
+
+export function paymentCurrency(): CurrencyUnit {
+  return { symbol: '¥', code: 'CNY', rate: 1 };
 }
 
 export function formatQuota(quota: unknown, platform?: PlatformInfo): string {

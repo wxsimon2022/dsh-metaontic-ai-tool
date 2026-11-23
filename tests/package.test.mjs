@@ -57,19 +57,28 @@ test('strips the package README without changing other entries', () => {
 });
 
 test('publishes searchable package metadata without the repository README', () => {
-  assert.equal(pkg.name, 'dsh-metaontic-ai-tool');
+  assert.equal(pkg.name, 'dsh-metaontic-newapi-lite');
   assert.equal(pkg.license, 'MIT');
-  assert.equal(pkg.homepage, 'https://github.com/wxsimon2022/dsh-metaontic-ai-tool#readme');
-  assert.equal(pkg.bugs.url, 'https://github.com/wxsimon2022/dsh-metaontic-ai-tool/issues');
+  assert.equal(pkg.homepage, 'https://github.com/wxsimon2022/dsh-metaontic-newapi-lite#readme');
+  assert.equal(pkg.bugs.url, 'https://github.com/wxsimon2022/dsh-metaontic-newapi-lite/issues');
+  assert.match(pkg.description, /New API/);
+  assert.match(pkg.description, /模型广场/);
 
   for (const keyword of [
     'deepseek-harness',
     'dsh-plugin',
     'metaontic-ai',
     'new-api',
+    'newapi',
     'model-aggregation',
+    'model-gateway',
+    'openai-compatible',
+    'llm-gateway',
+    'model-plaza',
     'api-key-management',
+    'api-key-group',
     'subscription-management',
+    'recharge-payment',
     'balance-query',
     'usage-query',
   ]) {
@@ -80,17 +89,29 @@ test('publishes searchable package metadata without the repository README', () =
   assert.equal(pkg.files.includes('README.md'), false);
 
   const llms = readFileSync(new URL('llms.txt', root), 'utf8');
+  const readme = readFileSync(new URL('README.md', root), 'utf8');
   assert.match(llms, /MetaOntic AI 是多模型聚合平台，提供稳定可靠的模型服务。/);
-  assert.match(llms, /dsh plugin --profile desktop add dsh-metaontic-ai-tool/);
+  assert.match(llms, /dsh plugin --profile desktop add dsh-metaontic-newapi-lite/);
   assert.match(llms, /https:\/\/ai\.bileego\.com\/sign-up\?aff=VzYr/);
+  assert.match(llms, /https:\/\/gitee.com\/hackloop\/dsh-metaontic-newapi-lite/);
+  assert.match(llms, /模型广场/);
+  assert.match(llms, /\/api\/pricing/);
+  assert.match(readme, /New API/);
+  assert.match(readme, /OpenAI 兼容/);
+  assert.match(readme, /模型广场/);
+  assert.match(readme, /https:\/\/gitee.com\/hackloop\/dsh-metaontic-newapi-lite/);
 });
 
 test('keeps installed plugin titles concise', () => {
   const zh = JSON.parse(readFileSync(new URL('locale/zh.json', root), 'utf8'));
   const en = JSON.parse(readFileSync(new URL('locale/en.json', root), 'utf8'));
 
-  assert.equal(zh.meta.title, 'MetaOntic AI 管理工具');
+  assert.equal(zh.meta.title, 'MetaOntic模型中转助手');
   assert.equal(en.meta.title, 'MetaOntic AI Management Tool');
+  assert.match(zh.meta.description, /New API/);
+  assert.match(zh.meta.description, /模型广场/);
+  assert.match(en.meta.description, /New API/);
+  assert.match(en.meta.description, /model plaza/i);
 });
 
 test('keeps packed archives out of the repository root', () => {
@@ -101,7 +122,7 @@ test('keeps packed archives out of the repository root', () => {
 
 test('keeps the upstream user agent in sync with the package version', () => {
   const constants = readFileSync(new URL('src/host/constants.ts', root), 'utf8');
-  const agent = `dsh-metaontic-ai-tool/${pkg.version}`;
+  const agent = `dsh-metaontic-newapi-lite/${pkg.version}`;
 
   assert.ok(constants.includes(agent), `missing user agent: ${agent}`);
 });

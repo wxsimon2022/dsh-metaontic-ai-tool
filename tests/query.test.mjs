@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -8,6 +8,7 @@ import {
   createApiKey,
   createApiKeysHandler,
   createLoginStore,
+  createModelsHandler,
   createQueryHandler,
   createSessionHandler,
   createSubscriptionHandler,
@@ -18,6 +19,7 @@ import {
   getTopupInfo,
   getSubscriptionInfo,
   listApiKeys,
+  listModels,
   normalizeAccessToken,
   normalizeBaseUrl,
   QueryError,
@@ -91,7 +93,7 @@ function sampleData(baseUrl = 'https://ai.bileego.com') {
 }
 
 async function temporaryStore(t) {
-  const directory = await mkdtemp(join(tmpdir(), 'dsh-metaontic-ai-tool-'));
+  const directory = await mkdtemp(join(tmpdir(), 'dsh-metaontic-newapi-lite-'));
   t.after(async () => rm(directory, { recursive: true, force: true }));
   return { directory, store: createLoginStore({ directory }) };
 }
@@ -176,11 +178,34 @@ test('falls back to the profile directory beside cordis.patch.yml', async t => {
   t.after(async () => rm(root, { recursive: true, force: true }));
   await writeFile(join(root, 'cordis.patch.yml'), '[]\n');
   const store = createLoginStore({
-    moduleUrl: pathToFileURL(join(root, 'node_modules', 'dsh-metaontic-ai-tool', 'index.js')).href,
+    moduleUrl: pathToFileURL(join(root, 'node_modules', 'dsh-metaontic-newapi-lite', 'index.js')).href,
   });
   await store.save('https://ai.bileego.com/', 'saved-test-token');
-  const saved = JSON.parse(await readFile(join(root, '.dsh-metaontic-ai-tool', 'login.json'), 'utf8'));
+  const saved = JSON.parse(await readFile(join(root, '.dsh-metaontic-newapi-lite', 'login.json'), 'utf8'));
   assert.equal(saved.accessToken, 'saved-test-token');
+});
+
+test('migrates the legacy login file when the renamed storage directory is empty', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'dsh-profile-'));
+  t.after(async () => rm(root, { recursive: true, force: true }));
+  await writeFile(join(root, 'cordis.patch.yml'), '[]\n');
+  const legacyDirectory = join(root, '.dsh-metaontic-ai-tool');
+  await mkdir(legacyDirectory, { recursive: true, mode: 0o700 });
+  await writeFile(join(legacyDirectory, 'login.json'), JSON.stringify({
+    version: 1,
+    baseUrl: 'https://ai.bileego.com/',
+    accessToken: 'saved-test-token',
+  }), { mode: 0o600 });
+  const store = createLoginStore({
+    moduleUrl: pathToFileURL(join(root, 'node_modules', 'dsh-metaontic-newapi-lite', 'index.js')).href,
+  });
+
+  const loaded = await store.load();
+  assert.equal(loaded.baseUrl, 'https://ai.bileego.com');
+  assert.equal(loaded.accessToken, 'saved-test-token');
+  const migrated = JSON.parse(await readFile(join(root, '.dsh-metaontic-newapi-lite', 'login.json'), 'utf8'));
+  assert.equal(migrated.accessToken, 'saved-test-token');
+  assert.equal((await stat(join(root, '.dsh-metaontic-newapi-lite', 'login.json'))).mode & 0o777, 0o600);
 });
 
 test('restores the saved session without returning the token', async t => {
@@ -264,6 +289,43 @@ test('lists API keys without returning full key material', async () => {
   assert.equal(result.keys[0].name, 'video-key');
   assert.equal('key' in result.keys[0], false);
   assert.equal(JSON.stringify(result).includes('sk-must-not-leak'), false);
+});
+
+test('lists API key groups with sanitized fields and ignores malformed entries', async () => {
+  const requests = [];
+  const keyFetch = async url => {
+    const parsed = new URL(url);
+    requests.push(parsed.pathname);
+    if (parsed.pathname.endsWith('/api/user/self/groups')) {
+      return jsonResponse({
+        success: true,
+        data: {
+          default: { desc: '默认分组', ratio: 1 },
+          'ds-75': { desc: ' 用户分组 ', ratio: 0.75 },
+          vip: { desc: '', ratio: 'bad' },
+          ignored: 1,
+          list: ['not-a-group'],
+        },
+      });
+    }
+    return jsonResponse({
+      success: true,
+      data: { total: 0, items: [] },
+    });
+  };
+
+  const result = await listApiKeys({
+    baseUrl: 'https://example.com/',
+    accessToken: 'saved-test-token',
+    fetchImpl: keyFetch,
+  });
+
+  assert.deepEqual(requests.sort(), ['/api/token/', '/api/user/self/groups']);
+  assert.deepEqual(result.groups, [
+    { name: 'default', desc: '默认分组', ratio: 1 },
+    { name: 'ds-75', desc: '用户分组', ratio: 0.75 },
+    { name: 'vip', desc: '', ratio: null },
+  ]);
 });
 
 test('creates API keys with validated fields', async () => {
@@ -438,6 +500,71 @@ test('creates a signed topup payment link without exposing the access token', as
     }),
     error => error.code === 'INVALID_TOPUP_AMOUNT',
   );
+});
+
+test('lists model catalog fields and sorts unique models', async () => {
+  const requests = [];
+  const modelFetch = async (url, init) => {
+    const parsed = new URL(url);
+    requests.push({ path: parsed.pathname, method: init.method, authorization: init.headers.authorization });
+    return jsonResponse({
+      success: true,
+      data: [
+        {
+          model_name: ' B model ',
+          description: '  multi\nline   description  ',
+          tags: 'chat, reasoning, chat',
+          icon: 'Vendor.Color',
+          enable_groups: ['vip', 'default', 'vip'],
+          supported_endpoint_types: ['openai', 'anthropic'],
+          model_ratio: '2.5',
+          model_price: 0,
+          completion_ratio: 2,
+          secret: 'must-not-leak',
+        },
+        { model_name: 'A model', enable_groups: ['default'] },
+        { model_name: 'A model', description: 'duplicate' },
+        { model_name: '', description: 'invalid' },
+      ],
+    });
+  };
+
+  const result = await listModels({
+    baseUrl: 'https://example.com/',
+    accessToken: 'saved-test-token',
+    fetchImpl: modelFetch,
+  });
+
+  assert.deepEqual(requests, [{
+    path: '/api/pricing',
+    method: 'GET',
+    authorization: 'Bearer saved-test-token',
+  }]);
+  assert.deepEqual(result.groups, ['default', 'vip']);
+  assert.deepEqual(result.models.map(model => model.name), ['A model', 'B model']);
+  assert.deepEqual(result.models[0], {
+    name: 'A model',
+    description: '',
+    tags: [],
+    icon: '',
+    groups: ['default'],
+    endpoints: [],
+    ratio: null,
+    price: null,
+    completionRatio: null,
+  });
+  assert.deepEqual(result.models[1], {
+    name: 'B model',
+    description: 'multi line description',
+    tags: ['chat', 'reasoning'],
+    icon: 'Vendor.Color',
+    groups: ['vip', 'default'],
+    endpoints: ['openai', 'anthropic'],
+    ratio: 2.5,
+    price: 0,
+    completionRatio: 2,
+  });
+  assert.equal(JSON.stringify(result).includes('must-not-leak'), false);
 });
 
 test('loads subscription plans and current subscriptions with approved fields', async () => {
@@ -624,6 +751,15 @@ test('topup routes require a saved login', async () => {
 test('subscription routes require a saved login', async () => {
   const handler = createSubscriptionHandler({ store: null });
   const response = await handler(new Request('http://localhost/subscription', { method: 'GET' }));
+  const payload = await response.json();
+  assert.equal(response.status, 401);
+  assert.equal(payload.ok, false);
+  assert.equal(payload.error.code, 'LOGIN_REQUIRED');
+});
+
+test('model routes require a saved login', async () => {
+  const handler = createModelsHandler({ store: null });
+  const response = await handler(new Request('http://localhost/models', { method: 'GET' }));
   const payload = await response.json();
   assert.equal(response.status, 401);
   assert.equal(payload.ok, false);

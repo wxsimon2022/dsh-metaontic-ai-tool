@@ -1,5 +1,6 @@
 import { DEFAULT_BASE_URL, QUERY_PATH, SESSION_PATH } from './constants.js';
 import { createApiKeysPage } from './api-keys-page.js';
+import { createModelsPage } from './models-page.js';
 import { createOverviewPage } from './overview-page.js';
 import { createHeader, createLoginForm } from './shell.js';
 import { PANEL_CSS } from './styles.js';
@@ -21,6 +22,7 @@ export function createDashboard(runtime: ClientRuntime) {
   const LoginForm = createLoginForm(runtime);
   const OverviewPage = createOverviewPage(runtime);
   const SubscriptionPage = createSubscriptionPage(runtime);
+  const ModelsPage = createModelsPage(runtime);
   const ApiKeysPage = createApiKeysPage(runtime);
   const TopupPage = createTopupPage(runtime);
 
@@ -205,6 +207,14 @@ export function createDashboard(runtime: ClientRuntime) {
                 onClick: () => setView('subscription'),
               }, t('subscription')),
               h('button', {
+                key: 'models',
+                type: 'button',
+                role: 'tab',
+                'aria-selected': view === 'models',
+                className: `mat-page-tab${view === 'models' ? ' mat-page-tab-active' : ''}`,
+                onClick: () => setView('models'),
+              }, t('modelsPage')),
+              h('button', {
                 key: 'api-keys',
                 type: 'button',
                 role: 'tab',
@@ -220,6 +230,8 @@ export function createDashboard(runtime: ClientRuntime) {
                 h(OverviewPage, { key: 'overview-card', data }),
                 h(TopupPage, { key: 'topup-card', data }),
               ])
+              : view === 'models'
+              ? h(ModelsPage, { key: 'models', data })
               : view === 'subscription'
               ? h(SubscriptionPage, { key: 'subscription', data })
               : view === 'apiKeys'
