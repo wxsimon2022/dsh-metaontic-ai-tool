@@ -151,6 +151,12 @@ test('keeps the dashboard shell tall enough to scroll', async () => {
   assert.match(code, /\.mat-root\{[^}]*overscroll-behavior:contain/);
 });
 
+test('uses the supplied MetaOntic logo for plugin icons', async () => {
+  const code = await readFile(new URL('../dist/client.js', import.meta.url), 'utf8');
+  assert.match(code, /data:image\/png;base64,/);
+  assert.match(code, /\.mat-panel-logo\{[^}]*object-fit:contain/);
+});
+
 test('shows the registration link only while the access token is empty', async () => {
   const code = await readFile(new URL('../dist/client.js', import.meta.url), 'utf8');
   let registration;

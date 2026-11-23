@@ -89,7 +89,7 @@
   "scripts": {
     "build": "npm run build:host && npm run build:client",
     "build:host": "tsc -p tsconfig.build.json",
-    "build:client": "esbuild src/client.ts --bundle --format=iife --platform=browser --target=es2022 --outfile=dist/client.js --sourcemap --log-level=warning",
+    "build:client": "esbuild src/client.ts --bundle --format=iife --platform=browser --target=es2022 --loader:.png=dataurl --outfile=dist/client.js --sourcemap --log-level=warning",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "check": "npm run typecheck && node --check tests/query.test.mjs",
     "test": "npm run build && node --test tests/*.test.mjs",

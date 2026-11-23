@@ -1,4 +1,5 @@
 import { DEFAULT_BASE_URL, REGISTER_URL } from './constants.js';
+import logoUrl from '../metaontic-ai.png';
 import type {
   ChangeEventLike,
   ClientRuntime,
@@ -10,21 +11,16 @@ import type {
 export function createPanelIconView({ h }: ClientRuntime) {
   return function PanelIconView({ size = 18, active = false }: PanelIconViewProps) {
     const pixels = Number(size) || 18;
-    return h('svg', {
+    return h('img', {
+      src: logoUrl,
       width: pixels,
       height: pixels,
-      viewBox: '0 0 24 24',
-      fill: 'none',
-      stroke: 'currentColor',
-      strokeWidth: 1.7,
-      strokeLinecap: 'round',
-      strokeLinejoin: 'round',
+      alt: '',
+      className: active ? 'mat-panel-logo mat-panel-logo-active' : 'mat-panel-logo',
       'aria-hidden': true,
-      style: { display: 'block', color: active ? 'var(--dsw-alias-brand-primary,#2563eb)' : 'currentColor' },
-    }, [
-      h('path', { key: 'outer', d: 'M12 2.8 20 7.4v9.2l-8 4.6-8-4.6V7.4z' }),
-      h('path', { key: 'inner', d: 'M8.2 12h7.6M12 8.2v7.6' }),
-    ]);
+      draggable: false,
+      style: { width: `${pixels}px`, height: `${pixels}px` },
+    });
   };
 }
 
@@ -33,7 +29,7 @@ export function createHeader(runtime: ClientRuntime) {
   const PanelIconView = createPanelIconView(runtime);
   return function Header() {
     return h('div', { className: 'mat-hero' }, [
-      h('div', { key: 'mark', className: 'mat-mark', 'aria-hidden': true }, h(PanelIconView, { size: 25 })),
+      h('div', { key: 'mark', className: 'mat-mark', 'aria-hidden': true }, h(PanelIconView, { size: 30 })),
       h('div', { key: 'copy' }, [
         h('h2', { key: 'title', className: 'mat-title' }, t('title')),
         h('p', { key: 'intro', className: 'mat-intro' }, t('intro')),

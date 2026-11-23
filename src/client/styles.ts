@@ -1,7 +1,9 @@
 export const PANEL_CSS = `
   .mat-root{box-sizing:border-box;width:100%;max-width:920px;height:100%;max-height:100vh;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;margin:0 auto;padding:22px 24px 40px;color:var(--dsw-alias-label-primary,#1f2329);font-size:13px;line-height:1.5}
   .mat-hero{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;padding:17px 18px;border:1px solid color-mix(in srgb,var(--dsw-alias-brand-primary,#2563eb) 14%,var(--dsw-alias-border-l1,#e4e8ee));border-radius:18px;background:linear-gradient(135deg,color-mix(in srgb,var(--dsw-alias-brand-primary,#2563eb) 9%,transparent),transparent 62%),var(--dsw-alias-bg-layer-1,#fff);box-shadow:0 10px 30px rgba(15,23,42,.05)}
-  .mat-mark{flex:0 0 auto;display:grid;place-items:center;width:46px;height:46px;border-radius:14px;background:linear-gradient(145deg,color-mix(in srgb,var(--dsw-alias-brand-primary,#2563eb) 18%,transparent),color-mix(in srgb,var(--dsw-alias-brand-primary,#2563eb) 8%,transparent));color:var(--dsw-alias-brand-primary,#2563eb);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--dsw-alias-brand-primary,#2563eb) 18%,transparent)}
+  .mat-mark{flex:0 0 auto;display:grid;place-items:center;width:46px;height:46px;border-radius:14px;background:var(--dsw-alias-bg-layer-1,#fff);box-shadow:inset 0 0 0 1px var(--dsw-alias-border-l1,#e4e8ee),0 6px 16px rgba(15,23,42,.06)}
+  .mat-panel-logo{display:block;flex:0 0 auto;object-fit:contain;filter:drop-shadow(0 0 1px rgba(255,255,255,.95))}
+  .mat-panel-logo-active{filter:drop-shadow(0 0 1px rgba(255,255,255,.95)) drop-shadow(0 0 2px color-mix(in srgb,var(--dsw-alias-brand-primary,#2563eb) 55%,transparent))}
   .mat-title{margin:0;font-size:20px;font-weight:680;letter-spacing:-.015em;line-height:1.35}
   .mat-intro{margin:4px 0 0;color:var(--dsw-alias-label-secondary,#67707c);font-size:12.5px;line-height:1.6}
   .mat-card{border:1px solid var(--dsw-alias-border-l1,#e4e8ee);border-radius:16px;background:var(--dsw-alias-settings-card-fill,var(--dsw-alias-bg-layer-1,#fff));padding:18px;box-shadow:0 10px 28px rgba(15,23,42,.045)}
