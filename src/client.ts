@@ -272,9 +272,9 @@ const PANEL_CSS = `
   .mat-key-create .mat-field{gap:5px}
   .mat-key-check{display:flex;align-items:center;gap:7px;min-height:38px;font-size:12px;font-weight:600}
   .mat-key-create-actions{display:flex;flex-wrap:wrap;gap:8px;grid-column:1/-1;justify-content:flex-end}
-  .mat-key-list{display:flex;flex-direction:column;gap:9px}
+  .mat-key-list{display:flex;flex-direction:column;gap:9px;max-height:min(58vh,520px);overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;padding-right:4px;scrollbar-gutter:stable}
   .mat-key-list-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 9px}
-  .mat-key-item{border:1px solid var(--dsw-alias-border-l1,#e4e8ee);border-radius:11px;padding:12px;background:var(--dsw-alias-bg-layer-1,#fff)}
+  .mat-key-item{flex:0 0 auto;border:1px solid var(--dsw-alias-border-l1,#e4e8ee);border-radius:11px;padding:12px;background:var(--dsw-alias-bg-layer-1,#fff)}
   .mat-key-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:9px}
   .mat-key-name{min-width:0;flex:1 1 180px;font-size:13px;font-weight:650;overflow-wrap:anywhere}
   .mat-key-secret{display:block;box-sizing:border-box;width:100%;border-radius:8px;background:var(--dsw-alias-bg-layer-2,#f5f7fa);padding:8px 9px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;overflow-wrap:anywhere;user-select:all}

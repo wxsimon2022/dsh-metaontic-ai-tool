@@ -52,6 +52,12 @@ test('loads the compiled browser client as a classic script', async () => {
   assert.deepEqual(slots, ['sidebar.panellist', 'main']);
 });
 
+test('keeps the API key list independently scrollable', async () => {
+  const code = await readFile(new URL('../dist/client.js', import.meta.url), 'utf8');
+  assert.match(code, /\.mat-key-list\{[^}]*max-height:[^;]+;[^}]*overflow-y:auto/);
+  assert.match(code, /\.mat-key-item\{[^}]*flex:0 0 auto/);
+});
+
 test('shows the registration link only while the access token is empty', async () => {
   const code = await readFile(new URL('../dist/client.js', import.meta.url), 'utf8');
   let registration;
