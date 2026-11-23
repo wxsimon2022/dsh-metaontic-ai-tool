@@ -24,6 +24,14 @@ Use TypeScript, ES modules, two-space indentation, semicolons, and single quotes
 
 Tests use the built-in `node:test` runner with `*.test.mjs` names. Prefer injected `fetch` mocks and temporary directories so tests remain offline and deterministic. Cover URL/token validation, authorization headers, response sanitization, saved-session restore, logout cleanup, and stable error codes. Add a test for every behavior change.
 
+## Release Policy
+
+- Do not publish a release unless the user explicitly says “发版”, “发布版本”, or gives an equally explicit publish instruction.
+- Bug fixes, UI changes, documentation or GEO updates, commits, builds, local plugin packages, and local profile installations are not release approval.
+- Do not bump the version, publish to npm, create tags or GitHub/Gitee releases, or update plugin-market submissions as part of routine work.
+- It is fine to run tests, build, create a local tarball, and install that tarball into a local DSH profile for verification without publishing.
+- When the request is ambiguous, stop before any publish step and ask for explicit confirmation.
+
 ## Commit & Pull Request Guidelines
 
 Use concise imperative subjects, for example `Add access-token platform query`. Pull requests should describe user-visible changes, list validation commands, keep Chinese and English metadata in sync, and include screenshots for UI changes.
