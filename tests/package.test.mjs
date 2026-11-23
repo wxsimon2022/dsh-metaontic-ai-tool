@@ -83,3 +83,17 @@ test('publishes searchable package metadata without the repository README', () =
   assert.match(llms, /dsh plugin --profile desktop add dsh-metaontic-ai-tool/);
   assert.match(llms, /https:\/\/ai\.bileego\.com\/sign-up\?aff=VzYr/);
 });
+
+test('keeps installed plugin titles concise', () => {
+  const zh = JSON.parse(readFileSync(new URL('locale/zh.json', root), 'utf8'));
+  const en = JSON.parse(readFileSync(new URL('locale/en.json', root), 'utf8'));
+
+  assert.equal(zh.meta.title, 'MetaOntic AI 管理工具');
+  assert.equal(en.meta.title, 'MetaOntic AI Management Tool');
+});
+
+test('keeps packed archives out of the repository root', () => {
+  const npmrc = readFileSync(new URL('.npmrc', root), 'utf8');
+
+  assert.match(npmrc, /^pack-destination=release$/m);
+});

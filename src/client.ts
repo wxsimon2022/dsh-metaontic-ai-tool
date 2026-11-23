@@ -244,16 +244,17 @@ const PANEL_CSS = `
   .mat-topbar-title{flex:1 1 220px;min-width:0}
   .mat-platform-name{margin:0;font-size:16px;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .mat-subtle{color:var(--dsw-alias-label-secondary,#67707c);font-size:11.5px;line-height:1.5}
-  .mat-overview{margin-top:10px;padding:15px 16px}
-  .mat-overview .mat-card-head{margin-bottom:10px}
+  .mat-overview{margin-top:10px;padding:14px 15px}
+  .mat-overview .mat-card-head{margin-bottom:9px}
+  .mat-overview .mat-metrics{gap:8px}
   .mat-overview .mat-metric{padding:9px 10px}
   .mat-overview .mat-metric-value{font-size:16px}
-  .mat-overview .mat-progress{margin:8px 0 5px}
+  .mat-overview .mat-progress{margin:7px 0 0}
   .mat-badges{display:flex;flex-wrap:wrap;gap:6px}
-  .mat-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px;margin-top:10px}
-  .mat-facts .mat-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:7px 0}
-  .mat-facts .mat-row-label{flex:0 0 auto}
-  .mat-facts .mat-row-value{min-width:0;text-align:right}
+  .mat-compact-lines{display:grid;gap:5px;margin-top:10px;border-top:1px dashed var(--dsw-alias-border-l1,#e4e8ee);padding-top:9px}
+  .mat-compact-line{display:flex;gap:8px;font-size:11.5px;line-height:1.5}
+  .mat-compact-label{flex:0 0 60px;color:var(--dsw-alias-label-secondary,#67707c)}
+  .mat-compact-value{min-width:0;overflow-wrap:anywhere}
   .mat-card-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px}
   .mat-card-title{font-size:13px;font-weight:650}
   .mat-badge{border-radius:999px;background:var(--dsw-alias-bg-layer-2,#f1f4f8);color:var(--dsw-alias-label-secondary,#67707c);padding:2px 8px;font-size:10.5px;font-weight:600}
@@ -269,11 +270,6 @@ const PANEL_CSS = `
   .mat-progress-bar.mat-progress-danger{background:#dc2626}
   .mat-ratio-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:13px}
   .mat-ratio-value{color:var(--dsw-alias-label-secondary,#67707c);font-size:11.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
-  .mat-rows{display:flex;flex-direction:column;gap:8px}
-  .mat-row{display:grid;grid-template-columns:minmax(90px,128px) minmax(0,1fr);gap:10px;border-top:1px dashed var(--dsw-alias-border-l1,#e4e8ee);padding-top:8px}
-  .mat-row:first-child{border-top:0;padding-top:0}
-  .mat-row-label{color:var(--dsw-alias-label-secondary,#67707c);font-size:11.5px}
-  .mat-row-value{min-width:0;overflow-wrap:anywhere;font-size:12px}
   .mat-mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px}
   .mat-foot{margin-top:14px;text-align:right}
   .mat-api-keys{margin-top:12px}
@@ -297,7 +293,7 @@ const PANEL_CSS = `
   .mat-btn-sm{height:30px;padding:0 10px;font-size:11.5px}
   .mat-btn-danger{border-color:color-mix(in srgb,var(--dsw-alias-state-error-primary,#c62828) 28%,transparent);color:var(--dsw-alias-state-error-primary,#c62828)}
   .mat-btn-danger:hover{background:color-mix(in srgb,var(--dsw-alias-state-error-primary,#c62828) 8%,transparent)}
-  @media (max-width:620px){.mat-root{padding:20px 16px 32px}.mat-metrics{grid-template-columns:1fr}.mat-row{grid-template-columns:1fr;gap:3px}.mat-facts{grid-template-columns:1fr}.mat-key-create{grid-template-columns:1fr}.mat-key-meta{grid-template-columns:1fr}}
+  @media (max-width:620px){.mat-root{padding:20px 16px 32px}.mat-metrics{grid-template-columns:1fr}.mat-key-create{grid-template-columns:1fr}.mat-key-meta{grid-template-columns:1fr}}
 `;
 
 type SetState<T> = (value: T | ((previous: T) => T)) => void;
@@ -403,12 +399,6 @@ interface ChangeEventLike {
 
 interface FormEventLike {
   preventDefault?: () => void;
-}
-
-interface RowProps {
-  label: unknown;
-  value?: unknown;
-  mono?: boolean;
 }
 
 interface PanelIconViewProps {
@@ -517,13 +507,6 @@ function roleLabel(t: DshTranslate, role: unknown): string {
 }
 
 function createPanel(React: ReactLike, h: HFunction, t: DshTranslate) {
-  function Row({ label, value, mono = false }: RowProps) {
-    return h('div', { className: 'mat-row' }, [
-      h('div', { key: 'label', className: 'mat-row-label' }, label),
-      h('div', { key: 'value', className: `mat-row-value${mono ? ' mat-mono' : ''}` }, value ?? t('empty')),
-    ]);
-  }
-
   function PanelIconView({ size = 18, active = false }: PanelIconViewProps) {
     const pixels = Number(size) || 18;
     return h('svg', {
@@ -628,6 +611,19 @@ function createPanel(React: ReactLike, h: HFunction, t: DshTranslate) {
     const statusActive = Number(account.status) !== 2;
     const unit = currency(platform);
     const showDisplayName = Boolean(account.display_name && account.display_name !== account.username);
+    const accountParts: string[] = [];
+    if (account.username) accountParts.push(String(account.username));
+    if (showDisplayName) accountParts.push(String(account.display_name));
+    if (account.group) accountParts.push(String(account.group));
+    accountParts.push(roleLabel(t, account.role));
+    if (account.id !== undefined && account.id !== null && account.id !== '') {
+      accountParts.push(`${t('accountId')} ${account.id}`);
+    }
+    const platformParts = [
+      platform.version ? `${t('version')} ${platform.version}` : '',
+      unit.code,
+      `${t('fetchedAt')} ${new Date(fetchedAt).toLocaleString()}`,
+    ].filter(Boolean);
     return h('section', { className: 'mat-card mat-overview' }, [
       h('div', { key: 'head', className: 'mat-card-head' }, [
         h('div', { key: 'title', className: 'mat-card-title' }, t('accountPlatform')),
@@ -670,19 +666,15 @@ function createPanel(React: ReactLike, h: HFunction, t: DshTranslate) {
           used: formatQuota(used, platform),
         }),
       }, h('div', { className: `mat-progress-bar${progressTone}`, style: { width: `${remainingPercentage}%` } })),
-      h('div', { key: 'raw', className: 'mat-hint' }, t('rawQuota', {
-        quota: formatQuota(remaining, platform),
-        used: formatQuota(used, platform),
-      })),
-      h('div', { key: 'facts', className: 'mat-facts' }, [
-        h(Row, { key: 'username', label: t('username'), value: account.username }),
-        showDisplayName ? h(Row, { key: 'display', label: t('displayName'), value: account.display_name }) : null,
-        h(Row, { key: 'group', label: t('group'), value: account.group }),
-        h(Row, { key: 'role', label: t('role'), value: roleLabel(t, account.role) }),
-        h(Row, { key: 'id', label: t('accountId'), value: String(account.id ?? ''), mono: true }),
-        h(Row, { key: 'version', label: t('version'), value: platform.version, mono: true }),
-        h(Row, { key: 'currency', label: t('currency'), value: unit.code }),
-        h(Row, { key: 'time', label: t('fetchedAt'), value: new Date(fetchedAt).toLocaleString(), mono: true }),
+      h('div', { key: 'summary', className: 'mat-compact-lines' }, [
+        h('div', { key: 'account', className: 'mat-compact-line' }, [
+          h('span', { key: 'label', className: 'mat-compact-label' }, t('account')),
+          h('span', { key: 'value', className: 'mat-compact-value' }, accountParts.join(' · ') || t('empty')),
+        ]),
+        h('div', { key: 'platform', className: 'mat-compact-line' }, [
+          h('span', { key: 'label', className: 'mat-compact-label' }, t('platform')),
+          h('span', { key: 'value', className: 'mat-compact-value' }, platformParts.join(' · ')),
+        ]),
       ]),
     ]);
   }

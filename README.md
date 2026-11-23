@@ -147,6 +147,7 @@ npm run check        # 类型检查与测试语法校验
 npm test             # 构建后运行离线测试
 npm run pack:check   # 检查 npm 发布文件清单
 npm run pack:plugin  # 生成不含 README 的插件包到 release/
+# 普通 npm pack 同样输出到 release/，不会在仓库根目录留下 .tgz
 ```
 
 `src/` 是唯一的手写 TypeScript 源码目录；`dist/` 由 `npm run build` 或 `tsc`

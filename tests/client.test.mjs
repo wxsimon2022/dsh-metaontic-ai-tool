@@ -264,10 +264,10 @@ test('shows remaining quota with a matching progress width', async () => {
   const fill = nodes.find(node => String(node.props?.className || '').startsWith('mat-progress-bar'));
   const percentage = nodes.find(node => node.props?.className === 'mat-ratio-value');
   const overview = nodes.find(node => node.props?.className === 'mat-card mat-overview');
-  const facts = nodes.find(node => node.props?.className === 'mat-facts');
+  const summary = nodes.find(node => node.props?.className === 'mat-compact-lines');
 
   assert.ok(overview);
-  assert.ok(facts);
+  assert.ok(summary);
   assert.equal(nodes.some(node => node.props?.className === 'mat-grid'), false);
   assert.ok(progress);
   assert.equal(progress.props['aria-valuetext'], '剩余 1.4%');
