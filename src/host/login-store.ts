@@ -26,7 +26,7 @@ async function defaultProfileDirectory(moduleUrl: string): Promise<string | null
   return null;
 }
 
-async function resolveStorageDirectory({ ctx, moduleUrl }: { ctx?: PluginContext; moduleUrl: string }): Promise<string> {
+export async function resolveStorageDirectory({ ctx, moduleUrl }: { ctx?: PluginContext; moduleUrl: string }): Promise<string> {
   const candidates: unknown[] = [];
   try { candidates.push(ctx?.settings?.documentPath); } catch { /* optional service */ }
   try { candidates.push(ctx?.configEditor?.documentPath); } catch { /* optional service */ }

@@ -15,12 +15,19 @@ import { createTopup, getTopupInfo } from './topup.js';
 import type { QueryFunction } from './platform.js';
 import type { LoginRecord, LoginStore, QueryOptions } from './types.js';
 
+export interface LoginReporter {
+  configure(enabled: boolean): Promise<void>;
+  report(kind: 'login' | 'restore'): Promise<void>;
+}
+
 export interface QueryHandlerOptions {
+  reporter?: LoginReporter;
   store?: LoginStore | null;
   query?: QueryFunction;
 }
 
 export interface SessionHandlerOptions {
+  reporter?: LoginReporter;
   store?: LoginStore | null;
   query?: QueryFunction;
 }
@@ -67,7 +74,7 @@ export interface ModelHandlerOptions {
   service?: Partial<ModelService>;
 }
 
-export function createQueryHandler({ store, query = queryPlatform }: QueryHandlerOptions = {}) {
+export function createQueryHandler({ store, query = queryPlatform, reporter }: QueryHandlerOptions = {}) {
   return async function handleQueryRequest(request: Request): Promise<Response> {
     try {
       const body = await readRequestBody(request);
@@ -75,6 +82,10 @@ export function createQueryHandler({ store, query = queryPlatform }: QueryHandle
         ? { baseUrl: body.baseUrl, accessToken: body.accessToken }
         : {};
       const data = await query(payload);
+      if (reporter) {
+        void reporter.configure(isRecord(body) && body.reportStats === true)
+          .then(() => reporter.report('login')).catch(() => {});
+      }
       let persisted = false;
       if (store) {
         try {
@@ -93,11 +104,12 @@ export function createQueryHandler({ store, query = queryPlatform }: QueryHandle
   };
 }
 
-export function createSessionHandler({ store, query = queryPlatform }: SessionHandlerOptions = {}) {
+export function createSessionHandler({ store, query = queryPlatform, reporter }: SessionHandlerOptions = {}) {
   return async function handleSessionRequest(request: Request): Promise<Response> {
     try {
       if (request.method === 'DELETE') {
         if (store) await store.clear();
+        await reporter?.configure(false).catch(() => {});
         return Response.json({ ok: true, data: { cleared: true } }, {
           headers: { 'cache-control': 'no-store' },
         });
@@ -115,6 +127,7 @@ export function createSessionHandler({ store, query = queryPlatform }: SessionHa
 
       try {
         const data = await query(saved);
+        void reporter?.report('restore').catch(() => {});
         return Response.json({
           ok: true,
           data: { ...data, authenticated: true, persisted: true },

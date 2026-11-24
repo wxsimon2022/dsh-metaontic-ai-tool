@@ -14,6 +14,7 @@ import {
   createSubscriptionHandler,
   createTopupHandler,
 } from './host/handlers.js';
+import { createLoginReporter } from './host/login-reporter.js';
 import { createLoginStore } from './host/login-store.js';
 import type { PluginContext } from './host/types.js';
 
@@ -86,18 +87,19 @@ export function apply(ctx: PluginContext): (() => void) | undefined {
     return;
   }
   const store = createLoginStore({ ctx });
+  const reporter = createLoginReporter({ ctx });
   const disposers = [
     connectionFetch.register({
       path: QUERY_ROUTE,
       methods: ['POST'],
       requestBody: 'buffered',
-      fetch: createQueryHandler({ store }),
+      fetch: createQueryHandler({ store, reporter }),
     }),
     connectionFetch.register({
       path: SESSION_ROUTE,
       methods: ['GET', 'DELETE'],
       requestBody: 'buffered',
-      fetch: createSessionHandler({ store }),
+      fetch: createSessionHandler({ store, reporter }),
     }),
     connectionFetch.register({
       path: API_KEYS_ROUTE,

@@ -245,6 +245,8 @@ export interface PanelIconViewProps {
 }
 
 export interface LoginFormProps {
+  reportStats: boolean;
+  setReportStats: SetState<boolean>;
   baseUrl: string;
   setBaseUrl: SetState<string>;
   token: string;

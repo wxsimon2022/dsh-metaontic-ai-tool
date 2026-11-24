@@ -39,7 +39,7 @@ export function createHeader(runtime: ClientRuntime) {
 }
 
 export function createLoginForm({ h, t }: ClientRuntime) {
-  return function LoginForm({ baseUrl, setBaseUrl, token, setToken, showToken, setShowToken, pending, error, onSubmit }: LoginFormProps) {
+  return function LoginForm({ reportStats, setReportStats, baseUrl, setBaseUrl, token, setToken, showToken, setShowToken, pending, error, onSubmit }: LoginFormProps) {
     return h('form', { className: 'mat-card mat-login', onSubmit, 'aria-busy': pending }, [
       h('div', { key: 'heading', className: 'mat-login-heading' }, [
         h('h3', { key: 'title', className: 'mat-login-title' }, t('loginTitle')),
@@ -99,6 +99,11 @@ export function createLoginForm({ h, t }: ClientRuntime) {
             }, t('registerNow')),
           ])
           : null,
+      ]),
+      h('label', { key: 'analytics', className: 'mat-login-analytics' }, [
+        h('input', { key: 'check', type: 'checkbox', checked: reportStats, disabled: pending,
+          onChange: () => setReportStats(previous => !previous) }),
+        h('span', { key: 'text', className: 'mat-hint' }, t('loginStatsHint')),
       ]),
       error ? h('div', { key: 'error', className: 'mat-error', role: 'alert' }, error) : null,
       h('div', { key: 'actions', className: 'mat-actions' }, h('button', {

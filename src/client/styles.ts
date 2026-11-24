@@ -8,6 +8,7 @@ export const PANEL_CSS = `
   .mat-intro{margin:4px 0 0;color:var(--dsw-alias-label-secondary,#67707c);font-size:12.5px;line-height:1.6}
   .mat-card{border:1px solid var(--dsw-alias-border-l1,#e4e8ee);border-radius:16px;background:var(--dsw-alias-settings-card-fill,var(--dsw-alias-bg-layer-1,#fff));padding:18px;box-shadow:0 10px 28px rgba(15,23,42,.045)}
   .mat-login{display:flex;flex-direction:column;gap:22px;width:100%;max-width:560px;box-sizing:border-box;margin:24px auto 0;padding:26px}
+  .mat-login-analytics{display:flex;align-items:flex-start;gap:8px}.mat-login-analytics input{flex-shrink:0;margin-top:3px}
   .mat-login-heading{display:grid;gap:6px;padding-bottom:18px;border-bottom:1px solid var(--dsw-alias-border-l1,#e4e8ee)}
   .mat-login-title{margin:0;font-size:18px;font-weight:650;letter-spacing:-.01em}
   .mat-login .mat-input{height:44px}
