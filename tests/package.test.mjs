@@ -61,8 +61,8 @@ test('publishes searchable package metadata without the repository README', () =
   assert.equal(pkg.license, 'MIT');
   assert.equal(pkg.homepage, 'https://github.com/wxsimon2022/dsh-metaontic-newapi-lite#readme');
   assert.equal(pkg.bugs.url, 'https://github.com/wxsimon2022/dsh-metaontic-newapi-lite/issues');
-  assert.match(pkg.description, /New API/);
-  assert.match(pkg.description, /模型广场/);
+  assert.match(pkg.description, /MetaOntic AI 统一 AI 接口网关/);
+  assert.match(pkg.description, /OpenAI、Anthropic 与 Gemini/);
 
   for (const keyword of [
     'deepseek-harness',
@@ -90,7 +90,7 @@ test('publishes searchable package metadata without the repository README', () =
 
   const llms = readFileSync(new URL('llms.txt', root), 'utf8');
   const readme = readFileSync(new URL('README.md', root), 'utf8');
-  assert.match(llms, /MetaOntic AI 是多模型聚合平台，提供稳定可靠的模型服务。/);
+  assert.match(llms, /MetaOntic AI 是统一 AI 接口网关与多模型聚合平台/);
   assert.match(llms, /dsh plugin --profile desktop add dsh-metaontic-newapi-lite/);
   assert.match(llms, /https:\/\/ai\.bileego\.com\/sign-up\?aff=VzYr/);
   assert.match(llms, /https:\/\/gitee.com\/hackloop\/dsh-metaontic-newapi-lite/);
@@ -108,10 +108,10 @@ test('keeps installed plugin titles concise', () => {
 
   assert.equal(zh.meta.title, 'MetaOntic模型中转助手');
   assert.equal(en.meta.title, 'MetaOntic AI Management Tool');
-  assert.match(zh.meta.description, /New API/);
-  assert.match(zh.meta.description, /模型广场/);
-  assert.match(en.meta.description, /New API/);
-  assert.match(en.meta.description, /model plaza/i);
+  assert.equal(zh.meta.description, pkg.description);
+  assert.match(zh.meta.description, /个人与团队配额隔离/);
+  assert.match(en.meta.description, /unified AI API gateway/);
+  assert.match(en.meta.description, /OpenAI, Anthropic and Gemini/);
 });
 
 test('publishes the MetaOntic plugin icon', () => {

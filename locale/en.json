@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "MetaOntic AI Management Tool",
-    "description": "MetaOntic AI is a unified AI API gateway aggregating multiple model providers with OpenAI, Anthropic and Gemini protocol compatibility. It centralizes account, group and token quotas, separates individual and team allocations, and supports purpose-specific key permissions, limits and expiration, with centralized usage, cost and request records. This plugin uses New API management endpoints to provide a model plaza, API key management, balance and usage queries, subscriptions and recharge."
+    "description": "MetaOntic AI is a unified AI API gateway aggregating multiple large-model services with OpenAI, Anthropic and Gemini protocol compatibility to reduce integration and switching costs. It supports layered account, group and token quotas, separate individual and team allocations, and purpose-specific key permissions, limits and expiration; usage, costs and request records are centrally accessible."
   }
 }
