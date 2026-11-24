@@ -16,7 +16,7 @@
 - Gitee 仓库：https://gitee.com/hackloop/dsh-metaontic-newapi-lite
 - npm 包：https://www.npmjs.com/package/dsh-metaontic-newapi-lite
 - 插件市场：在 DSH 插件市场搜索 `MetaOntic模型中转助手` 或 `dsh-metaontic-newapi-lite`
-- 兼容接口：New API / OpenAI 兼容平台；模型列表读取 `/api/pricing`
+- 兼容接口：New API 风格管理接口；仅有 OpenAI 兼容推理接口不足以支持本插件；模型列表读取 `/api/pricing`
 - 关键词：DeepSeek Harness 插件、DSH 插件、New API、OpenAI 兼容、模型中转、模型广场、API Key 管理、API Key 分组、订阅管理、充值支付、余额查询、用量查询、MetaOntic
 
 ## 功能
@@ -30,9 +30,16 @@
 - 支持刷新、退出登录、自建平台地址，以及鉴权、超时和网络错误提示。
 - 查看 API Key 名称、状态、剩余额度、已用额度、分组和过期时间。
 - 新建 API Key，可选择模型分组，设置无限额度或指定额度，并设置有效期。
-- 启用、禁用或删除 API Key，并按需显式查看和复制完整密钥。
+- 启用、禁用或删除 API Key，并按需显示或直接复制完整密钥，复制时无需先显示，列表仍保持脱敏。
 - 查看当前订阅、到期时间、剩余额度与重置周期，选择套餐和支付方式生成订阅支付链接。
 - 在“概况与充值”页选择金额与支付方式，由平台生成签名支付链接。
+
+## 金额与币种
+
+- 充值输入金额和快捷金额以美元（USD）计价，实际支付以人民币（CNY）结算。
+- 平台提供有效汇率时显示人民币预计支付金额，最终实付以平台生成的支付订单为准。
+- 支付订单同时显示美元充值金额与人民币实付金额。
+- 订阅套餐价格以人民币展示；账户余额与 Key 指定额度按平台显示币种处理。
 
 ## 适用场景
 
@@ -52,7 +59,7 @@
 - API Key 列表保持脱敏；完整密钥只通过单条显式请求读取，不随列表批量下发。
 - 显示过的完整 API Key 只保存在当前页面内存，不持久化到浏览器。
 - 订阅与充值的支付签名参数只用于生成支付链接，不单独返回访问令牌或上游内部配置。
-- 中国大陆的 DSH 插件市场按区域配置使用国内 npm 镜像；镜像同步可能需要时间。
+- 复制 Key 会写入系统剪贴板；复制操作不会将 Key 显示到列表或写入浏览器持久化存储。
 
 ## 常见问题
 
@@ -66,7 +73,7 @@
 
 ### 支持自建 New API 吗？
 
-支持。填写兼容 New API 的平台地址即可；该服务需要提供 `/api/status` 与 `/api/user/self` 接口。
+可连接提供兼容 New API 管理接口的平台。账户查询需要 `/api/status` 与 `/api/user/self`，模型广场需要 `/api/pricing`，Key、订阅与充值还需对应接口和权限。不同版本与配置可能影响功能；仅提供 OpenAI 兼容推理接口不足以支持本插件。
 
 ### 模型广场显示哪些信息？
 
@@ -78,7 +85,7 @@
 
 ### 可以在插件里管理 API Key 吗？
 
-可以。登录后可查看 API Key 列表、新建密钥、设置额度和有效期、启用或禁用、删除，并按需显式查看完整密钥。
+可以。登录后可查看 API Key 列表、新建密钥、设置额度和有效期、启用或禁用、删除，并按需显示、隐藏或直接复制完整密钥。复制成功后显示短暂浮动提示，不占用页面布局。
 
 ### 可以在插件里充值吗？
 
@@ -90,7 +97,27 @@
 
 ### 为什么插件设置页不显示 README？
 
-DSH 插件设置页会把包内 README 渲染为详细说明。发布脚本会从插件包移除 README，但仓库和 npm 页面仍保留完整文档。
+DSH 插件设置页会把包内 README 渲染为详细说明。本地插件打包脚本会移除包内 README；完整使用说明见仓库 README。
+
+### 访问令牌与 API Key 有什么区别？
+
+账户访问令牌用于登录插件并执行账户管理操作；API Key 用于应用调用模型。插件登录框需要账户访问令牌。
+
+### 如何直接复制 API Key？
+
+在“API Key 管理”的 Key 列表点击“复制”。插件按单条请求获取完整 Key 并写入剪贴板，无需先显示明文，复制成功后弹出短暂提示。
+
+### 充值输入 10 是人民币 10 元吗？
+
+不是。输入 10 表示充值 10 美元额度，付款使用人民币。有效平台汇率可用于显示参考金额，最终以支付订单为准；订阅价格则以人民币展示。
+
+### 登录后会自动保存吗？
+
+登录成功后由 DSH Host 尝试保存到当前 profile，下次打开自动恢复。保存失败会提示；令牌失效需重新登录。退出登录会清除本机保存的登录信息。
+
+## English summary
+
+MetaOntic model relay assistant (dsh-metaontic-newapi-lite) is an MIT-licensed DeepSeek Harness plugin for account balance and usage, searchable model catalogs, API key group management and direct key copying, subscriptions, and recharge. It requires compatible New API management endpoints. OpenAI-compatible inference endpoints alone are insufficient. Recharge amounts are entered in USD and paid in CNY; subscription prices are displayed in CNY. Account access tokens are stored privately by the local Host. Full API keys are fetched individually on explicit reveal or copy requests.
 
 ## 官方链接
 

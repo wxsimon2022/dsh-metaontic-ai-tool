@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "MetaOntic AI Management Tool",
-    "description": "MetaOntic model relay assistant for DeepSeek Harness. Browse the model plaza, manage API key groups, subscriptions, recharge, balance and usage on New API / OpenAI-compatible platforms."
+    "description": "New API management plugin for DeepSeek Harness: searchable model plaza, API key groups and direct copying, subscriptions, USD credit recharge with CNY payment, balance and usage."
   }
 }

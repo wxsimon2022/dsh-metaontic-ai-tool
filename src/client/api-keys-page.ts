@@ -27,6 +27,12 @@ export function createApiKeysPage({ React, h, t }: ClientRuntime) {
     const [loading, setLoading] = React.useState<boolean>(true);
     const [error, setError] = React.useState<string>('');
     const [notice, setNotice] = React.useState<string>('');
+    const [copyToast, setCopyToast] = React.useState<number>(0);
+    React.useEffect(() => {
+      if (!copyToast) return;
+      const timer = setTimeout(() => setCopyToast(0), 2000);
+      return () => clearTimeout(timer);
+    }, [copyToast]);
     const [busyId, setBusyId] = React.useState<number | null>(null);
     const [createOpen, setCreateOpen] = React.useState<boolean>(false);
     const [creating, setCreating] = React.useState<boolean>(false);
@@ -229,10 +235,10 @@ export function createApiKeysPage({ React, h, t }: ClientRuntime) {
       }
     }
 
-    async function toggleReveal(apiKey: ApiKeyInfo): Promise<void> {
+    async function toggleReveal(apiKey: ApiKeyInfo, copyOnly = false): Promise<void> {
       const id = Number(apiKey.id);
       if (!Number.isSafeInteger(id) || id <= 0) return;
-      if (revealed[String(id)]) {
+      if (!copyOnly && revealed[String(id)]) {
         setRevealed(previous => {
           const next = { ...previous };
           delete next[String(id)];
@@ -259,7 +265,11 @@ export function createApiKeysPage({ React, h, t }: ClientRuntime) {
         if (!response.ok || !payload?.ok || typeof key !== 'string' || !key) {
           throw new Error(payload?.error?.message || t('apiKeyRevealFailed'));
         }
-        setRevealed(previous => ({ ...previous, [String(id)]: key }));
+        if (copyOnly) {
+          await writeKey(key);
+        } else {
+          setRevealed(previous => ({ ...previous, [String(id)]: key }));
+        }
       } catch (failure) {
         setError(failure instanceof Error && failure.message ? failure.message : t('apiKeyRevealFailed'));
       } finally {
@@ -269,11 +279,20 @@ export function createApiKeysPage({ React, h, t }: ClientRuntime) {
 
     async function copyKey(apiKey: ApiKeyInfo): Promise<void> {
       const key = revealed[String(apiKey.id)];
-      if (!key) return;
+      setError('');
+      setNotice('');
+      if (!key) {
+        await toggleReveal(apiKey, true);
+        return;
+      }
+      await writeKey(key);
+    }
+
+    async function writeKey(key: string): Promise<void> {
       try {
         if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
           await navigator.clipboard.writeText(key);
-          setNotice(t('apiKeyCopied'));
+          setCopyToast(previous => previous + 1);
         } else {
           setNotice(t('apiKeyCopyUnavailable'));
         }
@@ -425,12 +444,13 @@ export function createApiKeysPage({ React, h, t }: ClientRuntime) {
               onClick: () => void toggleReveal(apiKey),
               disabled: busyId === id,
             }, keyText ? t('apiKeyHide') : t('apiKeyShow')),
-            keyText ? h('button', {
+            h('button', {
               key: 'copy',
               type: 'button',
               className: 'mat-btn mat-btn-sm',
               onClick: () => void copyKey(apiKey),
-            }, t('apiKeyCopy')) : null,
+              disabled: busyId === id,
+            }, t('apiKeyCopy')),
             h('button', {
               key: 'toggle',
               type: 'button',
@@ -486,6 +506,7 @@ export function createApiKeysPage({ React, h, t }: ClientRuntime) {
         h('span', { key: 'count', className: 'mat-badge' }, String(keys.length)),
       ]),
       keyList,
+      copyToast ? h('div', { key: 'copy-toast', className: 'mat-toast', role: 'status', 'aria-live': 'polite' }, t('apiKeyCopied')) : null,
       createForm,
     ]);
   };

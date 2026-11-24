@@ -1,10 +1,9 @@
 import { SUBSCRIPTION_PATH } from './constants.js';
-import { currency, formatNumber, formatPercent, formatQuota, paymentCurrency } from './runtime.js';
+import { formatNumber, formatPercent, formatQuota, paymentCurrency } from './runtime.js';
 import type {
   CardProps,
   ClientRuntime,
   FormEventLike,
-  PlatformInfo,
   SubscriptionConfig,
   SubscriptionConfigPayload,
   SubscriptionPaymentPayload,
@@ -14,10 +13,8 @@ import type {
   TopupPaymentMethod,
 } from './runtime.js';
 
-function planPrice(plan: SubscriptionPlan, platform?: PlatformInfo): string {
-  const code = String(plan.currency || '').toUpperCase();
-  const symbol = code === 'USD' ? '$' : code === 'CNY' ? '¥' : code === 'EUR' ? '€' : currency(platform).symbol;
-  return `${symbol}${formatNumber(plan.priceAmount)}`;
+function planPrice(plan: SubscriptionPlan): string {
+  return `${paymentCurrency().symbol}${formatNumber(plan.priceAmount)}`;
 }
 
 function dateTime(value: unknown, fallback: string): string {
@@ -203,7 +200,7 @@ export function createSubscriptionPage({ React, h, t }: ClientRuntime) {
         }, [
           h('div', { key: 'head', className: 'mat-sub-plan-head' }, [
             h('strong', { key: 'title', className: 'mat-sub-plan-title' }, plan.title),
-            h('span', { key: 'price', className: 'mat-sub-plan-price' }, planPrice(plan, data.platform)),
+            h('span', { key: 'price', className: 'mat-sub-plan-price' }, planPrice(plan)),
           ]),
           plan.subtitle ? h('p', { key: 'subtitle', className: 'mat-sub-plan-subtitle' }, plan.subtitle) : null,
           h('div', { key: 'meta', className: 'mat-sub-plan-meta' }, [
@@ -246,7 +243,7 @@ export function createSubscriptionPage({ React, h, t }: ClientRuntime) {
         h('div', { key: 'actions', className: 'mat-sub-pay-actions' }, [
           selectedPlan ? h('span', { key: 'selection', className: 'mat-hint' }, t('subscriptionSelected', {
             title: selectedPlan.title,
-            price: planPrice(selectedPlan, data.platform),
+            price: planPrice(selectedPlan),
           })) : null,
           h('button', {
             key: 'submit',

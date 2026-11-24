@@ -26,6 +26,10 @@ export function createTopupPage({ React, h, t }: ClientRuntime) {
     const minTopup = Number(config?.minTopup) || 1;
     const unit = topupAmountCurrency();
     const payUnit = paymentCurrency();
+    const exchangeRate = Number(data.platform?.usd_exchange_rate);
+    const estimatedPayment = Number(amount) > 0 && Number.isFinite(exchangeRate) && exchangeRate > 0
+      ? `${payUnit.symbol}${formatNumber(Number(amount) * exchangeRate)}`
+      : '';
 
     async function loadConfig(): Promise<void> {
       setLoading(true);
@@ -135,6 +139,8 @@ export function createTopupPage({ React, h, t }: ClientRuntime) {
             disabled: creating,
             required: true,
           }),
+          h('span', { key: 'currency-hint', className: 'mat-hint' }, t('topupCurrencyHint')),
+          estimatedPayment ? h('span', { key: 'estimate', className: 'mat-hint', role: 'status' }, t('topupEstimate', { amount: estimatedPayment })) : null,
           amountOptions.length > 0
             ? h('div', { key: 'amounts', className: 'mat-choice-row' }, amountOptions.map(option => {
               const selected = Number(amount) === Number(option);
@@ -179,6 +185,10 @@ export function createTopupPage({ React, h, t }: ClientRuntime) {
 
     const paidMoney = payment?.payMoney ? `${payUnit.symbol}${payment.payMoney}` : '';
     const paymentPanel = payment?.payUrl ? h('div', { key: 'payment', className: 'mat-topup-pay mat-pay-inline' }, [
+      h('div', { key: 'credits', className: 'mat-pay-line' }, [
+        h('span', { key: 'label' }, t('topupAmount')),
+        h('strong', { key: 'value' }, `${unit.symbol}${formatNumber(payment.amount || amount)}`),
+      ]),
       h('div', { key: 'money', className: 'mat-pay-line' }, [
         h('span', { key: 'label' }, paidMoney ? t('topupPayMoney') : t('topupAmount')),
         h('strong', { key: 'value' }, paidMoney || `${unit.symbol}${formatNumber(payment.amount || amount)}`),

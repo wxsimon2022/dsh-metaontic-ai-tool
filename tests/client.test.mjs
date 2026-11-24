@@ -367,7 +367,7 @@ test('lists API keys masked and reveals one only on request', async () => {
     }
     throw new Error(`unexpected request: ${method} ${target}`);
   };
-  vm.runInNewContext(code, { window, console, URL, setTimeout, clearTimeout, fetch, navigator: {} });
+  vm.runInNewContext(code, { window, console, URL, setTimeout, clearTimeout, fetch, navigator: { clipboard: { writeText: async value => { assert.equal(value, 'sk-explicit-reveal'); } } } });
 
   const { React, render: renderTree } = createReactHarness();
 
@@ -423,6 +423,15 @@ test('lists API keys masked and reveals one only on request', async () => {
   assert.ok(nodes.some(node => node.props?.className === 'mat-key-item'));
   assert.ok(nodes.some(node => node.props?.children?.[0] === 'dsh-desktop'));
   assert.equal(nodes.some(node => node.type === 'code' && String(node.props?.className || '').startsWith('mat-key-secret')), false);
+  assert.equal(JSON.stringify(nodes).includes('sk-explicit-reveal'), false);
+
+  const copy = nodes.find(node => node.type === 'button' && node.props?.children?.[0] === 'apiKeyCopy');
+  assert.ok(copy);
+  copy.props.onClick();
+  await new Promise(resolve => setImmediate(resolve));
+  nodes = render();
+  assert.ok(nodes.some(node => node.props?.className === 'mat-toast' && node.props?.children?.[0] === 'apiKeyCopied'));
+  assert.equal(nodes.some(node => node.props?.className === 'mat-notice' && node.props?.children?.[0] === 'apiKeyCopied'), false);
   assert.equal(JSON.stringify(nodes).includes('sk-explicit-reveal'), false);
 
   const reveal = nodes.find(node => node.type === 'button' && node.props?.children?.[0] === 'apiKeyShow');
@@ -739,6 +748,7 @@ test('shows subscriptions on their own page and creates a signed subscription li
 
   assert.ok(nodes.some(node => node.props?.className === 'mat-card mat-subscription'));
   assert.ok(nodes.some(node => node.props?.className === 'mat-sub-plan mat-sub-plan-active'));
+  assert.ok(nodes.some(node => node.props?.className === 'mat-sub-plan-price' && node.props.children?.[0] === '¥99'));
   assert.ok(nodes.some(node => node.props?.className === 'mat-sub-current'));
   assert.ok(nodes.some(node => node.props?.children?.[0] === '短视频生成套餐'));
   assert.equal(nodes.some(node => node.props?.className === 'mat-key-item'), false);

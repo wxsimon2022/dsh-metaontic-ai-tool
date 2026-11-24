@@ -1,7 +1,7 @@
 {
   "name": "dsh-metaontic-newapi-lite",
-  "version": "0.0.1",
-  "description": "MetaOntic模型中转助手：DeepSeek Harness 的 New API / OpenAI 兼容模型中转插件，支持模型广场、API Key 分组管理、订阅充值、余额与用量查询。",
+  "version": "0.0.2",
+  "description": "DeepSeek Harness 的 New API 平台管理插件：模型广场搜索、API Key 分组与一键复制、订阅购买、美元额度充值与人民币支付、余额和用量查询。",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
