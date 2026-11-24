@@ -7,7 +7,14 @@ export const PANEL_CSS = `
   .mat-title{margin:0;font-size:20px;font-weight:680;letter-spacing:-.015em;line-height:1.35}
   .mat-intro{margin:4px 0 0;color:var(--dsw-alias-label-secondary,#67707c);font-size:12.5px;line-height:1.6}
   .mat-card{border:1px solid var(--dsw-alias-border-l1,#e4e8ee);border-radius:16px;background:var(--dsw-alias-settings-card-fill,var(--dsw-alias-bg-layer-1,#fff));padding:18px;box-shadow:0 10px 28px rgba(15,23,42,.045)}
-  .mat-login{display:flex;flex-direction:column;gap:16px;max-width:560px}
+  .mat-login{display:flex;flex-direction:column;gap:22px;width:100%;max-width:560px;box-sizing:border-box;margin:24px auto 0;padding:26px}
+  .mat-login-heading{display:grid;gap:6px;padding-bottom:18px;border-bottom:1px solid var(--dsw-alias-border-l1,#e4e8ee)}
+  .mat-login-title{margin:0;font-size:18px;font-weight:650;letter-spacing:-.01em}
+  .mat-login .mat-input{height:44px}
+  .mat-login .mat-input-wrap>.mat-btn{height:44px}
+  .mat-login .mat-register{justify-content:space-between;gap:12px;margin-top:8px;padding:12px;border-radius:10px;background:var(--dsw-alias-bg-layer-2,#f5f7fa)}
+  .mat-login>.mat-actions .mat-btn{height:42px}
+  @container (max-width:380px){.mat-login{padding:18px;gap:18px;margin-top:16px}.mat-login .mat-input-wrap{flex-wrap:wrap}.mat-login .mat-input-wrap>.mat-btn{height:32px;margin-left:auto}}
   .mat-field{display:flex;flex-direction:column;gap:8px}
   .mat-label{font-size:12px;font-weight:600;color:var(--dsw-alias-label-primary,#1f2329)}
   .mat-input-wrap{display:flex;gap:8px}

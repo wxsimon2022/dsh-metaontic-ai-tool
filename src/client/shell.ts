@@ -40,7 +40,11 @@ export function createHeader(runtime: ClientRuntime) {
 
 export function createLoginForm({ h, t }: ClientRuntime) {
   return function LoginForm({ baseUrl, setBaseUrl, token, setToken, showToken, setShowToken, pending, error, onSubmit }: LoginFormProps) {
-    return h('form', { className: 'mat-card mat-login', onSubmit }, [
+    return h('form', { className: 'mat-card mat-login', onSubmit, 'aria-busy': pending }, [
+      h('div', { key: 'heading', className: 'mat-login-heading' }, [
+        h('h3', { key: 'title', className: 'mat-login-title' }, t('loginTitle')),
+        h('p', { key: 'description', className: 'mat-hint' }, t('loginDescription')),
+      ]),
       h('label', { key: 'url-field', className: 'mat-field' }, [
         h('span', { key: 'label', className: 'mat-label' }, t('baseUrl')),
         h('input', {
@@ -61,6 +65,7 @@ export function createLoginForm({ h, t }: ClientRuntime) {
           h('input', {
             key: 'input',
             className: 'mat-input mat-mono',
+            'aria-label': t('accessToken'),
             type: showToken ? 'text' : 'password',
             value: token,
             onChange: (event: ChangeEventLike) => setToken(event.target.value),
@@ -74,6 +79,7 @@ export function createLoginForm({ h, t }: ClientRuntime) {
             key: 'toggle',
             type: 'button',
             className: 'mat-btn',
+            'aria-pressed': showToken,
             onClick: () => setShowToken(value => !value),
             disabled: pending,
           }, showToken ? t('hideToken') : t('showToken')),

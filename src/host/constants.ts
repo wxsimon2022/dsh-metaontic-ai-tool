@@ -13,4 +13,4 @@ export const MAX_PAYMENT_URL_LENGTH = 16_384;
 export const STORAGE_DIR_NAME = '.dsh-metaontic-newapi-lite';
 export const LEGACY_STORAGE_DIR_NAME = '.dsh-metaontic-ai-tool';
 export const STORAGE_FILE_NAME = 'login.json';
-export const USER_AGENT = 'dsh-metaontic-newapi-lite/0.0.2';
+export const USER_AGENT = 'dsh-metaontic-newapi-lite/0.0.3';
