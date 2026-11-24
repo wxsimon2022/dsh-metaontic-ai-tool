@@ -28,7 +28,6 @@ export function createDashboard(runtime: ClientRuntime) {
 
   return function Dashboard() {
     const [baseUrl, setBaseUrl] = React.useState<string>(DEFAULT_BASE_URL);
-    const [reportStats, setReportStats] = React.useState<boolean>(false);
     const [token, setToken] = React.useState<string>('');
     const [showToken, setShowToken] = React.useState<boolean>(false);
     const [status, setStatus] = React.useState<UiStatus>('restoring');
@@ -100,7 +99,7 @@ export function createDashboard(runtime: ClientRuntime) {
         const response = await fetch(QUERY_PATH, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ baseUrl, accessToken: token, reportStats }),
+          body: JSON.stringify({ baseUrl, accessToken: token }),
         });
         let payload: QueryPayload;
         try {
@@ -245,8 +244,6 @@ export function createDashboard(runtime: ClientRuntime) {
             setBaseUrl,
             token,
             setToken,
-            reportStats,
-            setReportStats,
             showToken,
             setShowToken,
             pending,

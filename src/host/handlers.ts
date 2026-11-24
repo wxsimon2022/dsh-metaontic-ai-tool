@@ -17,7 +17,7 @@ import type { LoginRecord, LoginStore, QueryOptions } from './types.js';
 
 export interface LoginReporter {
   configure(enabled: boolean): Promise<void>;
-  report(kind: 'login' | 'restore'): Promise<void>;
+  report(kind: 'open' | 'login' | 'restore'): Promise<void>;
 }
 
 export interface QueryHandlerOptions {
@@ -83,7 +83,7 @@ export function createQueryHandler({ store, query = queryPlatform, reporter }: Q
         : {};
       const data = await query(payload);
       if (reporter) {
-        void reporter.configure(isRecord(body) && body.reportStats === true)
+        void reporter.configure(true)
           .then(() => reporter.report('login')).catch(() => {});
       }
       let persisted = false;
@@ -115,6 +115,8 @@ export function createSessionHandler({ store, query = queryPlatform, reporter }:
         });
       }
 
+      void reporter?.configure(true).then(() => reporter.report('open')).catch(() => {});
+
       const saved = store ? await store.load() : null;
       if (!saved) {
         return Response.json({
@@ -127,7 +129,7 @@ export function createSessionHandler({ store, query = queryPlatform, reporter }:
 
       try {
         const data = await query(saved);
-        void reporter?.report('restore').catch(() => {});
+        void reporter?.configure(true).then(() => reporter.report('restore')).catch(() => {});
         return Response.json({
           ok: true,
           data: { ...data, authenticated: true, persisted: true },

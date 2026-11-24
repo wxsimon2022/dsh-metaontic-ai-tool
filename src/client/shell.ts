@@ -38,8 +38,9 @@ export function createHeader(runtime: ClientRuntime) {
   };
 }
 
-export function createLoginForm({ h, t }: ClientRuntime) {
-  return function LoginForm({ reportStats, setReportStats, baseUrl, setBaseUrl, token, setToken, showToken, setShowToken, pending, error, onSubmit }: LoginFormProps) {
+export function createLoginForm({ React, h, t }: ClientRuntime) {
+  return function LoginForm({ baseUrl, setBaseUrl, token, setToken, showToken, setShowToken, pending, error, onSubmit }: LoginFormProps) {
+    const [helpOpen, setHelpOpen] = React.useState(false);
     return h('form', { className: 'mat-card mat-login', onSubmit, 'aria-busy': pending }, [
       h('div', { key: 'heading', className: 'mat-login-heading' }, [
         h('h3', { key: 'title', className: 'mat-login-title' }, t('loginTitle')),
@@ -59,12 +60,19 @@ export function createLoginForm({ h, t }: ClientRuntime) {
           required: true,
         }),
       ]),
-      h('label', { key: 'token-field', className: 'mat-field' }, [
-        h('span', { key: 'label', className: 'mat-label' }, t('accessToken')),
+      h('div', { key: 'token-field', className: 'mat-field' }, [
+        h('div', { key: 'heading', className: 'mat-token-heading' }, [
+          h('label', { key: 'label', className: 'mat-label', htmlFor: 'mat-access-token' }, t('accessToken')),
+          h('button', {
+            key: 'help', type: 'button', className: 'mat-token-help',
+            'aria-haspopup': 'dialog', onClick: () => setHelpOpen(true),
+          }, t('accessTokenHow')),
+        ]),
         h('div', { key: 'wrap', className: 'mat-input-wrap' }, [
           h('input', {
             key: 'input',
             className: 'mat-input mat-mono',
+            id: 'mat-access-token',
             'aria-label': t('accessToken'),
             type: showToken ? 'text' : 'password',
             value: token,
@@ -100,11 +108,23 @@ export function createLoginForm({ h, t }: ClientRuntime) {
           ])
           : null,
       ]),
-      h('label', { key: 'analytics', className: 'mat-login-analytics' }, [
-        h('input', { key: 'check', type: 'checkbox', checked: reportStats, disabled: pending,
-          onChange: () => setReportStats(previous => !previous) }),
-        h('span', { key: 'text', className: 'mat-hint' }, t('loginStatsHint')),
-      ]),
+      helpOpen ? h('dialog', {
+        key: 'token-help-dialog', className: 'mat-token-dialog',
+        'aria-labelledby': 'mat-token-help-title',
+        ref: (node: HTMLDialogElement | null) => { if (node && !node.open) node.showModal(); },
+        onCancel: () => setHelpOpen(false), onClose: () => setHelpOpen(false),
+      }, [
+        h('div', { key: 'head', className: 'mat-modal-head' }, [
+          h('div', { key: 'title', id: 'mat-token-help-title', className: 'mat-modal-title' }, t('accessTokenHowTitle')),
+          h('button', { key: 'close', type: 'button', className: 'mat-modal-close',
+            autoFocus: true, 'aria-label': t('apiKeyCancel'), onClick: () => setHelpOpen(false) }, '×'),
+        ]),
+        h('ol', { key: 'steps', className: 'mat-token-help-steps' }, [
+          h('li', { key: 'signin' }, t('accessTokenStepLogin')),
+          h('li', { key: 'create' }, t('accessTokenStepCreate')),
+          h('li', { key: 'paste' }, t('accessTokenStepPaste')),
+        ]),
+      ]) : null,
       error ? h('div', { key: 'error', className: 'mat-error', role: 'alert' }, error) : null,
       h('div', { key: 'actions', className: 'mat-actions' }, h('button', {
         type: 'submit',
