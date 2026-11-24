@@ -128,7 +128,7 @@ npm run pack:check
 
 ```bash
 npm run pack:plugin
-dsh plugin --profile desktop add ./release/dsh-metaontic-newapi-lite-0.0.3.tgz
+dsh plugin --profile desktop add ./release/dsh-metaontic-newapi-lite-0.0.4.tgz
 ```
 
 本地包位于 `release/`，不包含 README，避免仓库说明显示在插件设置页。更新本地包后需重启 DSH；如同名包被缓存，可将包复制为新的文件名后重新安装。
