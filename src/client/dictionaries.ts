@@ -1,7 +1,7 @@
 export const zh = {
   sidebarLabel: 'MetaOntic模型中转助手',
   title: 'MetaOntic模型中转助手',
-  intro: 'MetaOntic AI 是多模型聚合平台，提供稳定可靠的模型服务。',
+  intro: 'MetaOntic AI 统一 AI 接口网关：多模型接入、多协议兼容，集中管理额度与调用用量。',
   baseUrl: '平台地址',
   accessToken: '访问令牌',
   accessTokenPlaceholder: '请输入访问令牌',
@@ -195,7 +195,7 @@ export const zh = {
 export const en = {
   sidebarLabel: 'MetaOntic模型中转助手',
   title: 'MetaOntic AI Management Tool',
-  intro: 'MetaOntic AI is a multi-model aggregation platform offering stable, reliable model services. Sign in with an access token to inspect the platform and your account.',
+  intro: 'MetaOntic AI unifies model access with protocol compatibility, centralized quotas and usage tracking.',
   baseUrl: 'Platform URL',
   accessToken: 'Access token',
   accessTokenPlaceholder: 'Enter access token',

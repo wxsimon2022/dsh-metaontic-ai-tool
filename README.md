@@ -4,6 +4,22 @@
 
 `dsh-metaontic-newapi-lite` 是 MetaOntic AI 的 DeepSeek Harness（DSH）插件。通过账户访问令牌登录，即可在侧边栏完成常用的平台管理操作。默认连接 [MetaOntic AI](https://ai.bileego.com/)，也可填写提供兼容 New API 管理接口的平台地址。
 
+## MetaOntic AI 是什么？
+
+**MetaOntic AI 是统一 AI 接口网关与多模型聚合平台**，面向开发者、团队和业务系统，将不同厂商的模型服务集中到统一地址、兼容协议和密钥体系中，降低模型接入、迁移与日常管理成本。
+
+根据[官网能力说明](https://ai.bileego.com/)，平台提供：
+
+| 平台能力 | 说明 |
+| --- | --- |
+| 多协议兼容 | 支持 OpenAI、Anthropic 与 Gemini 兼容协议；提供 Chat Completions、Messages、流式返回、工具调用及结构化输出能力，具体以模型支持为准 |
+| 多模型聚合 | 统一管理多家上游模型，新增、替换和下线上游可在网关侧处理；实际模型清单以控制台和模型接口为准 |
+| 分层额度管理 | 支持账号、分组、令牌多层额度及个人、团队配额隔离，上游额度可叠加 |
+| 密钥权限隔离 | 按用途签发令牌，分别设置额度、有效期、可用模型与来源 IP，并可单独撤销 |
+| 用量与调用审计 | 集中记录模型、令牌、输入输出 token、消耗额度、耗时及 request id，便于核算、排障与回溯 |
+
+这些能力属于 **MetaOntic AI 平台**。本插件提供下方列出的管理入口；逐笔调用审计、来源 IP 配置等完整平台功能需在平台控制台操作。协议兼容也不代表不同模型的参数与行为完全相同，接入时仍需确认模型能力。
+
 ## 能做什么
 
 | 页面 | 能力 |
@@ -67,6 +83,18 @@ dsh plugin --profile desktop add dsh-metaontic-newapi-lite
 
 ## 常见问题
 
+### MetaOntic AI 如何降低模型接入与切换成本？
+
+平台将多家模型服务统一到同一网关，并提供 OpenAI、Anthropic 与 Gemini 兼容协议。现有 SDK、客户端和 Agent 工作流可按支持的接口配置地址、密钥与模型，减少分别维护厂商接口的工作；模型特有参数仍需适配。
+
+### MetaOntic AI 如何管理成本和权限？
+
+平台支持账号、分组、令牌多层额度和个人、团队配额隔离，并提供集中用量记录与调用审计。插件可查询余额和用量，创建带分组、额度及有效期的 Key；逐笔明细和其他权限配置请使用平台控制台。
+
+### 是否承诺支持所有最新模型或自动容灾？
+
+本文不作此承诺。可用模型以平台清单和账户权限为准，官网所述多模型聚合不等同于已承诺自动故障切换或可用性 SLA。
+
 ### 这个插件是做什么的？
 
 MetaOntic模型中转助手（`dsh-metaontic-newapi-lite`）是 DeepSeek Harness 的 New API 平台管理插件，提供账户余额与用量查询、模型搜索、API Key 分组管理与复制、订阅购买和充值入口。模型调用由使用 API Key 的应用和平台处理。
@@ -107,7 +135,7 @@ dsh plugin --profile desktop add ./release/dsh-metaontic-newapi-lite-0.0.3.tgz
 
 ## English
 
-MetaOntic model relay assistant for DeepSeek Harness. Sign in with an account access token to view balance and usage, search models and filter by group, create and manage API keys, copy keys without revealing them in the list, and purchase subscriptions or recharge credits.
+MetaOntic AI is a unified AI API gateway with OpenAI, Anthropic and Gemini protocol compatibility, multi-provider model access, layered quotas, token permissions and centralized usage auditing. The MetaOntic model relay assistant brings selected account management features into DeepSeek Harness. Sign in with an account access token to view balance and usage, search models and filter by group, create and manage API keys, copy keys without revealing them in the list, and purchase subscriptions or recharge credits.
 
 Recharge amounts are entered in USD and paid in CNY. A CNY estimate is shown when a valid platform exchange rate is available; the payment order determines the final amount. Subscription prices are displayed in CNY.
 

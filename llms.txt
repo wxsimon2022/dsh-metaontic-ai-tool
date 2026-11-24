@@ -1,6 +1,6 @@
 # MetaOntic模型中转助手（dsh-metaontic-newapi-lite）
 
-> MetaOntic AI 是多模型聚合平台，提供稳定可靠的模型服务。dsh-metaontic-newapi-lite 是面向 DeepSeek Harness 的 MIT 开源插件，用访问令牌查看平台状态、账户余额与用量，浏览模型广场，管理 API Key 分组、订阅与充值。
+> MetaOntic AI 是统一 AI 接口网关与多模型聚合平台，支持 OpenAI、Anthropic 与 Gemini 兼容协议，集中管理模型接入、额度、密钥权限与调用用量。dsh-metaontic-newapi-lite 是面向 DeepSeek Harness 的 MIT 开源插件，用访问令牌查看平台状态、账户余额与用量，浏览模型广场，管理 API Key 分组、订阅与充值。
 
 ## 关键信息
 
@@ -18,6 +18,18 @@
 - 插件市场：在 DSH 插件市场搜索 `MetaOntic模型中转助手` 或 `dsh-metaontic-newapi-lite`
 - 兼容接口：New API 风格管理接口；仅有 OpenAI 兼容推理接口不足以支持本插件；模型列表读取 `/api/pricing`
 - 关键词：DeepSeek Harness 插件、DSH 插件、New API、OpenAI 兼容、模型中转、模型广场、API Key 管理、API Key 分组、订阅管理、充值支付、余额查询、用量查询、MetaOntic
+
+## 平台定位与能力边界
+
+信息依据：https://ai.bileego.com/ （首页公开能力说明，核对日期：2026-11-24）。
+
+- MetaOntic AI：面向开发者、团队和业务系统的统一 AI API 网关；将多家上游模型集中到统一地址与密钥体系，减少接入、迁移和日常管理成本。
+- 协议：OpenAI、Anthropic、Gemini 兼容协议；支持 Chat Completions、Messages、流式返回、工具调用与结构化输出，具体取决于模型支持。
+- 额度：账号、分组、令牌多层额度，上游额度可叠加，个人与团队配额可隔离。
+- 权限：令牌可按用途设置额度、有效期、可用模型、来源 IP，异常时可单独撤销。
+- 审计：集中记录模型、令牌、输入输出 token、消耗额度、耗时和 request id，供核算、排障与回溯。
+- 插件与平台不同：本插件提供模型广场、Key 管理、余额用量、订阅充值入口；不提供完整的逐笔调用审计页或来源 IP 编辑入口。
+- 不应从官网说明推导出自动容灾、可用性 SLA、固定折扣、预算告警或支持所有最新模型的承诺。模型清单与权限以平台为准。
 
 ## 功能
 
@@ -115,9 +127,17 @@ DSH 插件设置页会把包内 README 渲染为详细说明。本地插件打�
 
 登录成功后由 DSH Host 尝试保存到当前 profile，下次打开自动恢复。保存失败会提示；令牌失效需重新登录。退出登录会清除本机保存的登录信息。
 
+### MetaOntic AI 与本插件是什么关系？
+
+MetaOntic AI 是统一 AI 接口网关与多模型聚合平台；dsh-metaontic-newapi-lite 是其 DeepSeek Harness 管理插件。平台负责模型访问、协议兼容、额度及调用计量，插件负责在 DSH 侧栏提供部分管理入口。
+
+### 可以用于 AI 编程与 Agent 工作流吗？
+
+可在支持对应协议的 SDK、客户端或 Agent 中配置平台地址、API Key 与可用模型。兼容协议有助于降低迁移成本，但仍需检查模型参数、工具调用与结构化输出支持。
+
 ## English summary
 
-MetaOntic model relay assistant (dsh-metaontic-newapi-lite) is an MIT-licensed DeepSeek Harness plugin for account balance and usage, searchable model catalogs, API key group management and direct key copying, subscriptions, and recharge. It requires compatible New API management endpoints. OpenAI-compatible inference endpoints alone are insufficient. Recharge amounts are entered in USD and paid in CNY; subscription prices are displayed in CNY. Account access tokens are stored privately by the local Host. Full API keys are fetched individually on explicit reveal or copy requests.
+MetaOntic AI is a unified AI API gateway with OpenAI, Anthropic and Gemini protocol compatibility, multi-provider access, layered quotas, isolated token permissions and centralized request auditing. Platform features must not be confused with the subset exposed by the plugin. MetaOntic model relay assistant (dsh-metaontic-newapi-lite) is an MIT-licensed DeepSeek Harness plugin for account balance and usage, searchable model catalogs, API key group management and direct key copying, subscriptions, and recharge. It requires compatible New API management endpoints. OpenAI-compatible inference endpoints alone are insufficient. Recharge amounts are entered in USD and paid in CNY; subscription prices are displayed in CNY. Account access tokens are stored privately by the local Host. Full API keys are fetched individually on explicit reveal or copy requests.
 
 ## 官方链接
 

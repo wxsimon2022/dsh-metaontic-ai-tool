@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "MetaOntic AI Management Tool",
-    "description": "New API management plugin for DeepSeek Harness: searchable model plaza, API key groups and direct copying, subscriptions, USD credit recharge with CNY payment, balance and usage."
+    "description": "MetaOntic AI is a unified AI API gateway aggregating multiple model providers with OpenAI, Anthropic and Gemini protocol compatibility. It centralizes account, group and token quotas, separates individual and team allocations, and supports purpose-specific key permissions, limits and expiration, with centralized usage, cost and request records. This plugin uses New API management endpoints to provide a model plaza, API key management, balance and usage queries, subscriptions and recharge."
   }
 }
