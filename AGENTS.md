@@ -33,6 +33,15 @@ Tests use the built-in `node:test` runner with `*.test.mjs` names. Prefer inject
 - It is fine to run tests, build, create a local tarball, and install that tarball into a local DSH profile for verification without publishing.
 - When the request is ambiguous, stop before any publish step and ask for explicit confirmation.
 
+## npm 发版授权规范
+
+- npm 发版统一走浏览器授权，明确使用官方源 `https://registry.npmjs.org`，不使用镜像源进行登录或发布。
+- 发布前执行 `npm login --auth-type=web --registry=https://registry.npmjs.org`，将 CLI 返回的官方授权链接提供给用户，等待浏览器授权成功；不要索要或让用户在聊天中发送密码、OTP、恢复码或访问令牌。
+- 使用交互终端发布已验证的安装包：`npm publish ./release/dsh-metaontic-newapi-lite-<version>.tgz --access public --auth-type=web --registry=https://registry.npmjs.org`。若发布还需二次验证，继续走 CLI 提供的浏览器授权流程；登录成功不等于发布成功。
+- 遇到授权失败或过期，重新发起浏览器授权，不重复使用旧授权链接，不退回索要 OTP 或长期令牌的方式。不得输出本机 npm 凭据配置的内容。
+- 发布后核对官方源的 `latest`、版本及 tarball 可下载性，再核对国内镜像；镜像尚未同步时明确告知，不重复发布同一版本。
+- 浏览器授权不能代替用户的明确发版指令，仍遵守上方 Release Policy。
+
 ## Commit & Pull Request Guidelines
 
 Use concise imperative subjects, for example `Add access-token platform query`. Pull requests should describe user-visible changes, list validation commands, keep Chinese and English metadata in sync, and include screenshots for UI changes.
