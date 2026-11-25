@@ -1,4 +1,6 @@
+import { createRegistrationHandler } from './host/registration.js';
 import {
+  REGISTER_ROUTE,
   API_KEYS_ROUTE,
   MODELS_ROUTE,
   QUERY_ROUTE,
@@ -89,6 +91,7 @@ export function apply(ctx: PluginContext): (() => void) | undefined {
   const store = createLoginStore({ ctx });
   const reporter = createLoginReporter({ ctx });
   const disposers = [
+    connectionFetch.register({ path: REGISTER_ROUTE, methods: ['GET', 'POST'], requestBody: 'buffered', fetch: createRegistrationHandler() }),
     connectionFetch.register({
       path: QUERY_ROUTE,
       methods: ['POST'],

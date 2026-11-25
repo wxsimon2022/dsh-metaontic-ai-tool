@@ -102,3 +102,13 @@ test('failed delivery retries with a stable event ID and marks only acknowledged
     assert.equal(calls[0].eventId, calls[1].eventId);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
+
+test('opening the login page reports installation without a saved account', async () => {
+  const kinds = [];
+  const reporter = { configure: async () => {}, report: async kind => { kinds.push(kind); } };
+  const handler = createSessionHandler({ reporter, store: { load: async () => null, save: async () => {}, clear: async () => {} } });
+  const response = await handler(new Request('https://local/'));
+  assert.equal((await response.json()).data.authenticated, false);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(kinds, ['open']);
+});

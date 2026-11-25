@@ -48,7 +48,7 @@ dsh plugin --profile desktop add dsh-metaontic-newapi-lite
 
 登录信息保存成功后，下次打开会尝试恢复登录；令牌失效时需重新登录。点击 **退出登录** 可清除本机保存的登录信息。
 
-没有账号时，可点击面板中的 **注册账号**，或访问 [MetaOntic AI 注册页](https://ai.bileego.com/sign-up?aff=VzYr)。
+没有账号时，可选择 **在线注册**，在插件弹窗中填写用户名、邮箱、密码及邮箱验证码；也可选择 **网页注册**，前往 [MetaOntic AI 注册页](https://ai.bileego.com/sign-up?aff=VzYr)。在线注册固定携带 `aff_code: "VzYr"`，密码及验证码不保存。平台开启用户协议或隐私政策时，需在弹窗中阅读并勾选同意；要求额外人机验证时，请使用网页注册。注册成功后，在平台“安全与访问 → 访问令牌生成”获取令牌，再返回插件登录。
 
 ## 创建与复制 API Key
 
@@ -136,7 +136,7 @@ npm run pack:check
 
 ```bash
 npm run pack:plugin
-dsh plugin --profile desktop add ./release/dsh-metaontic-newapi-lite-0.0.5.tgz
+dsh plugin --profile desktop add ./release/dsh-metaontic-newapi-lite-0.0.6.tgz
 ```
 
 本地包位于 `release/`，不包含 README，避免仓库说明显示在插件设置页。更新本地包后需重启 DSH；如同名包被缓存，可将包复制为新的文件名后重新安装。

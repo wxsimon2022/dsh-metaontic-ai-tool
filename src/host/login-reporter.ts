@@ -57,7 +57,7 @@ export function createLoginReporter(
     })();
     await loading;
   }
-  async function reportOnce(kind: 'login' | 'restore'): Promise<void> {
+  async function reportOnce(kind: 'open' | 'login' | 'restore'): Promise<void> {
     try {
       await load();
       if (!state?.enabled) return;

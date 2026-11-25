@@ -1,3 +1,5 @@
+import { loadRegisterConfig } from './register-config.js';
+import { createRegisterDialog } from './register-dialog.js';
 import { DEFAULT_BASE_URL, REGISTER_URL } from './constants.js';
 import logoUrl from '../metaontic-ai.png';
 import type {
@@ -38,9 +40,15 @@ export function createHeader(runtime: ClientRuntime) {
   };
 }
 
-export function createLoginForm({ React, h, t }: ClientRuntime) {
+export function createLoginForm(runtime: ClientRuntime) {
+  const { React, h, t } = runtime;
+  const RegisterDialog = createRegisterDialog(runtime);
   return function LoginForm({ baseUrl, setBaseUrl, token, setToken, showToken, setShowToken, pending, error, onSubmit }: LoginFormProps) {
+    const [registerOpen, setRegisterOpen] = React.useState(false);
     const [helpOpen, setHelpOpen] = React.useState(false);
+    React.useEffect(() => {
+      void loadRegisterConfig().catch(() => {});
+    }, []);
     return h('form', { className: 'mat-card mat-login', onSubmit, 'aria-busy': pending }, [
       h('div', { key: 'heading', className: 'mat-login-heading' }, [
         h('h3', { key: 'title', className: 'mat-login-title' }, t('loginTitle')),
@@ -68,7 +76,7 @@ export function createLoginForm({ React, h, t }: ClientRuntime) {
             'aria-haspopup': 'dialog', onClick: () => setHelpOpen(true),
           }, t('accessTokenHow')),
         ]),
-        h('div', { key: 'wrap', className: 'mat-input-wrap' }, [
+        h('div', { key: 'wrap', className: 'mat-input-wrap mat-login-token' }, [
           h('input', {
             key: 'input',
             className: 'mat-input mat-mono',
@@ -93,21 +101,9 @@ export function createLoginForm({ React, h, t }: ClientRuntime) {
           }, showToken ? t('hideToken') : t('showToken')),
         ]),
         h('p', { key: 'hint', className: 'mat-hint' }, t('accessTokenHint')),
-        h('p', { key: 'privacy', className: 'mat-hint' }, t('tokenPrivacy')),
-        !token.trim() && !pending
-          ? h('div', { key: 'register', className: 'mat-register' }, [
-            h('span', { key: 'prompt', className: 'mat-hint' }, t('registerPrompt')),
-            h('a', {
-              key: 'link',
-              className: 'mat-btn mat-btn-register',
-              href: REGISTER_URL,
-              target: '_blank',
-              rel: 'noopener noreferrer',
-              referrerPolicy: 'no-referrer',
-            }, t('registerNow')),
-          ])
-          : null,
+
       ]),
+      registerOpen ? h(RegisterDialog, { key: 'register-dialog', onClose: () => setRegisterOpen(false) }) : null,
       helpOpen ? h('dialog', {
         key: 'token-help-dialog', className: 'mat-token-dialog',
         'aria-labelledby': 'mat-token-help-title',
@@ -132,6 +128,23 @@ export function createLoginForm({ React, h, t }: ClientRuntime) {
         disabled: pending,
       }, pending ? t('loginPending') : t('login')),
       ),
+      h('p', { key: 'privacy', className: 'mat-hint mat-login-privacy' }, t('tokenPrivacy')),
+        !token.trim() && !pending
+          ? h('div', { key: 'register', className: 'mat-register' }, [
+            h('span', { key: 'prompt', className: 'mat-hint' }, t('registerPrompt')),
+            h('div', { key: 'actions', className: 'mat-register-actions' }, [
+            h('a', {
+              key: 'link',
+              className: 'mat-btn mat-btn-register',
+              href: REGISTER_URL,
+              target: '_blank',
+              rel: 'noopener noreferrer',
+              referrerPolicy: 'no-referrer',
+            }, t('registerWeb')),
+            h('button', { key: 'inline', type: 'button', className: 'mat-btn mat-btn-register', onClick: () => setRegisterOpen(true) }, t('registerInline')),
+            ]),
+          ])
+          : null,
     ]);
   };
 }
