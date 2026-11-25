@@ -1,153 +1,85 @@
-# MetaOntic模型中转助手（dsh-metaontic-newapi-lite）
+# MetaOntic AI 模型中转助手 / MetaOntic AI Management Tool
 
-> MetaOntic AI 是统一 AI 接口网关与多模型聚合平台，支持 OpenAI、Anthropic 与 Gemini 兼容协议，集中管理模型接入、额度、密钥权限与调用用量。dsh-metaontic-newapi-lite 是面向 DeepSeek Harness 的 MIT 开源插件，用访问令牌查看平台状态、账户余额与用量，浏览模型广场，管理 API Key 分组、订阅与充值。
+> dsh-metaontic-newapi-lite 是面向 DeepSeek Harness（DSH）的 MIT 开源平台管理插件。默认连接 MetaOntic AI，提供模型广场、API Key 分组与额度管理、密钥复制、余额用量查询、订阅及充值，并支持插件内邮箱验证码注册和网页注册。MetaOntic AI 平台提供多模型统一接入及 OpenAI、Anthropic、Gemini 兼容协议；插件本身提供管理入口，不执行模型推理。
 
-## 关键信息
+## 文档入口
 
-- 插件名称：dsh-metaontic-newapi-lite
-- 中文名称：MetaOntic模型中转助手
-- 适用环境：DeepSeek Harness（DSH）
-- 默认平台地址：https://ai.bileego.com/
-- 登录方式：MetaOntic AI 访问令牌，不需要用户名或密码
-- 注册入口：https://ai.bileego.com/sign-up?aff=VzYr
-- 安装命令：`dsh plugin --profile desktop add dsh-metaontic-newapi-lite`
-- 开源协议：MIT
-- GitHub 仓库：https://github.com/wxsimon2022/dsh-metaontic-newapi-lite
-- Gitee 仓库：https://gitee.com/hackloop/dsh-metaontic-newapi-lite
-- npm 包：https://www.npmjs.com/package/dsh-metaontic-newapi-lite
-- 插件市场：在 DSH 插件市场搜索 `MetaOntic模型中转助手` 或 `dsh-metaontic-newapi-lite`
-- 兼容接口：New API 风格管理接口；仅有 OpenAI 兼容推理接口不足以支持本插件；模型列表读取 `/api/pricing`
-- 关键词：DeepSeek Harness 插件、DSH 插件、New API、OpenAI 兼容、模型中转、模型广场、API Key 管理、API Key 分组、订阅管理、充值支付、余额查询、用量查询、MetaOntic
+- [使用说明与常见问题](https://github.com/wxsimon2022/dsh-metaontic-newapi-lite#readme)：安装、注册、访问令牌登录、模型浏览、密钥、订阅、充值及隐私说明。
+- [npm 安装包](https://www.npmjs.com/package/dsh-metaontic-newapi-lite)：包名 dsh-metaontic-newapi-lite。
+- [MetaOntic AI 平台](https://ai.bileego.com/)：模型可用性、协议、计费与账户权限以平台当前配置为准。
+- [问题反馈](https://github.com/wxsimon2022/dsh-metaontic-newapi-lite/issues)：插件问题与功能建议。
+- [MIT 许可](https://github.com/wxsimon2022/dsh-metaontic-newapi-lite/blob/master/LICENSE)。
 
-## 平台定位与能力边界
+## 产品事实与能力边界
 
-信息依据：https://ai.bileego.com/ （首页公开能力说明，核对日期：2026-11-24）。
+| 主题 | 准确信息 |
+| --- | --- |
+| 中文名称 | MetaOntic模型中转助手 |
+| 英文名称 | MetaOntic AI Management Tool |
+| 安装环境 | DeepSeek Harness / DSH，Node.js 20 或更新版本 |
+| 安装命令 | `dsh plugin --profile desktop add dsh-metaontic-newapi-lite`，安装后重启 DSH |
+| 默认平台 | https://ai.bileego.com/ |
+| 账户注册 | 插件内邮箱验证码注册或网页注册；仅注册 MetaOntic AI 账号 |
+| 注册归因 | 网页入口带 `aff=VzYr`；插件内注册提交 `aff_code: "VzYr"` |
+| 登录凭据 | 账户访问令牌，与模型推理使用的 API Key 不同 |
+| 兼容平台 | 需提供 New API 风格管理接口；只有 OpenAI 兼容推理接口不足以使用全部功能 |
+| 模型广场 | 搜索模型名称、标签和说明，按分组筛选，查看接口类型与计费信息 |
+| API Key | 新建、分组、额度和有效期设置、启停、删除、按需显示及复制 |
+| 账户 | 查询余额、累计消耗、请求次数及额度剩余比例 |
+| 订阅充值 | 查看套餐与当前订阅、生成支付链接；实际开通与到账由平台负责 |
+| 完整调用审计与来源 IP 权限 | 属于平台控制台能力，插件不提供完整调用记录页或来源 IP 编辑入口 |
 
-- MetaOntic AI：面向开发者、团队和业务系统的统一 AI API 网关；将多家上游模型集中到统一地址与密钥体系，减少接入、迁移和日常管理成本。
-- 协议：OpenAI、Anthropic、Gemini 兼容协议；支持 Chat Completions、Messages、流式返回、工具调用与结构化输出，具体取决于模型支持。
-- 额度：账号、分组、令牌多层额度，上游额度可叠加，个人与团队配额可隔离。
-- 权限：令牌可按用途设置额度、有效期、可用模型、来源 IP，异常时可单独撤销。
-- 审计：集中记录模型、令牌、输入输出 token、消耗额度、耗时和 request id，供核算、排障与回溯。
-- 插件与平台不同：本插件提供模型广场、Key 管理、余额用量、订阅充值入口；不提供完整的逐笔调用审计页或来源 IP 编辑入口。
-- 不应从官网说明推导出自动容灾、可用性 SLA、固定折扣、预算告警或支持所有最新模型的承诺。模型清单与权限以平台为准。
+MetaOntic AI 将多家模型集中到统一网关，兼容 OpenAI、Anthropic 与 Gemini 协议，降低模型接入与切换成本。平台支持账号、分组与令牌多层额度、个人与团队配额隔离，以及集中用量和请求记录。插件将其中部分管理操作带入 DSH。协议兼容不代表所有模型支持相同参数；不应据此承诺所有最新模型、自动容灾、固定价格、预算告警或可用性 SLA。
 
-## 功能
+## 注册与登录问答
 
-- 使用访问令牌登录 MetaOntic AI。
-- 访问令牌为空时显示注册按钮，跳转到带邀请码的注册页面。
-- 查询 New API 兼容的 `/api/status` 与 `/api/user/self` 接口。
-- 浏览模型广场，查看模型名称、说明、标签、支持分组、接口类型与计费倍率。
-- 展示平台名称、平台版本、服务地址、账户分组、账户状态、可用余额、已用额度和请求次数。
-- 登录成功后由 Host 保存平台地址与访问令牌，下次打开面板自动恢复。
-- 支持刷新、退出登录、自建平台地址，以及鉴权、超时和网络错误提示。
-- 查看 API Key 名称、状态、剩余额度、已用额度、分组和过期时间。
-- 新建 API Key，可选择模型分组，设置无限额度或指定额度，并设置有效期。
-- 启用、禁用或删除 API Key，并按需显示或直接复制完整密钥，复制时无需先显示，列表仍保持脱敏。
-- 查看当前订阅、到期时间、剩余额度与重置周期，选择套餐和支付方式生成订阅支付链接。
-- 在“概况与充值”页选择金额与支付方式，由平台生成签名支付链接。
+### 如何安装插件？
 
-## 金额与币种
+在 DSH 插件市场搜索“MetaOntic模型中转助手”或包名 `dsh-metaontic-newapi-lite`，也可执行上面的安装命令。安装后重启 DSH，在侧栏打开插件。
 
-- 充值输入金额和快捷金额以美元（USD）计价，实际支付以人民币（CNY）结算。
-- 平台提供有效汇率时显示人民币预计支付金额，最终实付以平台生成的支付订单为准。
-- 支付订单同时显示美元充值金额与人民币实付金额。
-- 订阅套餐价格以人民币展示；账户余额与 Key 指定额度按平台显示币种处理。
+### 可以直接在线注册吗？
 
-## 适用场景
-
-- 在 DeepSeek Harness 内查看 MetaOntic AI 服务状态。
-- 快速核对账户余额、已用额度和请求次数。
-- 验证访问令牌是否有效或已经过期。
-- 连接提供相同接口的自建 New API 兼容服务。
-
-## 安全与数据
-
-- 访问令牌只发送到用户填写的平台地址，不经过其他中转服务。
-- 保存的访问令牌不会返回浏览器，也不会写入日志、URL、测试夹具或发布说明。
-- 登录信息保存在当前 DSH profile 的 `.dsh-metaontic-newapi-lite/login.json`；旧版 `.dsh-metaontic-ai-tool/login.json` 会自动兼容读取并迁移。
-- 保存目录权限为 `0700`，文件权限为 `0600`。
-- 上游请求禁止重定向并设置超时。
-- 账户数据经过字段白名单过滤，不返回上游令牌、邮箱或其他未使用字段。
-- API Key 列表保持脱敏；完整密钥只通过单条显式请求读取，不随列表批量下发。
-- 显示过的完整 API Key 只保存在当前页面内存，不持久化到浏览器。
-- 订阅与充值的支付签名参数只用于生成支付链接，不单独返回访问令牌或上游内部配置。
-- 复制 Key 会写入系统剪贴板；复制操作不会将 Key 显示到列表或写入浏览器持久化存储。
-
-## 常见问题
-
-### MetaOntic模型中转助手是什么？
-
-它是 MetaOntic AI 的 DeepSeek Harness 插件，用访问令牌登录后在 DSH 中查看平台和账户信息、管理 API Key、订阅与充值，不负责模型推理。
+可以。登录页提供“网页注册”和“在线注册”。在线注册填写用户名、邮箱、密码与邮箱验证码，并按平台配置阅读和勾选协议；密码和验证码不保存。平台要求额外人机验证时使用网页注册。注册固定发往默认 MetaOntic AI 平台，不受自定义平台地址影响。
 
 ### 如何获取访问令牌？
 
-登录 MetaOntic AI 控制台，在个人安全设置中创建访问令牌。没有账号时，可在插件面板点击“注册账号”，或访问 https://ai.bileego.com/sign-up?aff=VzYr 。
+登录 MetaOntic AI 控制台，在“安全与访问 → 访问令牌生成”创建账户访问令牌。插件登录框标题旁的“如何获取”提供弹窗说明。注册成功不等于插件已登录，仍需创建并填写访问令牌。
 
-### 支持自建 New API 吗？
+### 注册弹窗为什么有时仍显示加载？
 
-可连接提供兼容 New API 管理接口的平台。账户查询需要 `/api/status` 与 `/api/user/self`，模型广场需要 `/api/pricing`，Key、订阅与充值还需对应接口和权限。不同版本与配置可能影响功能；仅提供 OpenAI 兼容推理接口不足以支持本插件。
+进入登录页即预加载配置，在页面内存中缓存 60 秒，并合并同时进行的请求。请求未完成或缓存过期时会加载；预加载失败不影响令牌登录，打开弹窗时可重新请求。发送验证码和提交注册前仍检查最新平台配置。
 
-### 模型广场显示哪些信息？
+### 可以用 API Key 登录插件吗？
 
-模型广场读取 New API 兼容平台的 `/api/pricing` 数据，展示模型名称、说明、标签、支持分组、接口类型和计费倍率，并支持按名称、标签或分组筛选。
+不可以。账户访问令牌用于账户管理；API Key 用于应用、SDK 与 Agent 调用模型。可在插件中创建并复制 API Key，再配置到支持相应协议的应用。
 
-### 令牌会被上传到其他地方吗？
+## 金额、密钥与数据问答
 
-不会。令牌仅用于查询用户填写的平台地址，并由 Host 保存在本机当前 profile 的私有文件中。
+### 充值输入 10 是支付人民币 10 元吗？
 
-### 可以在插件里管理 API Key 吗？
+不是。输入 10 表示 10 美元充值额度，实际支付人民币。平台提供有效汇率时显示预计人民币金额，最终以支付订单为准。订阅套餐价格以人民币显示；账户余额与密钥指定额度按平台显示币种处理。
 
-可以。登录后可查看 API Key 列表、新建密钥、设置额度和有效期、启用或禁用、删除，并按需显示、隐藏或直接复制完整密钥。复制成功后显示短暂浮动提示，不占用页面布局。
+### 如何复制 API Key？
 
-### 可以在插件里充值吗？
+在密钥列表点击“复制”。插件按单条请求读取完整密钥并写入系统剪贴板，无需先显示明文；复制成功以短暂浮动提示反馈。列表保持脱敏，完整密钥不持久化到浏览器。
 
-可以。登录后在“概况与充值”页选择平台提供的金额与支付方式，插件会生成支付链接；到账状态由 MetaOntic AI 平台负责。
+### 访问令牌保存在哪里？
 
-### 可以在插件里购买订阅吗？
+由本机 DSH Host 保存到当前 profile 的 `.dsh-metaontic-newapi-lite/login.json`，目录权限 0700、文件权限 0600。支持旧路径迁移。保存的访问令牌不返回浏览器，不写日志，仅用于用户选择的平台。退出登录清除本机保存的登录信息。上游请求设置超时并禁止重定向。
 
-可以。登录后切换到“订阅”页查看当前订阅，选择平台提供的套餐和支付方式，插件会生成订阅支付链接；开通状态由 MetaOntic AI 平台负责。
+### 是否有匿名统计？
 
-### 为什么插件设置页不显示 README？
-
-DSH 插件设置页会把包内 README 渲染为详细说明。本地插件打包脚本会移除包内 README；完整使用说明见仓库 README。
-
-### 访问令牌与 API Key 有什么区别？
-
-账户访问令牌用于登录插件并执行账户管理操作；API Key 用于应用调用模型。插件登录框需要账户访问令牌。
-
-### 如何直接复制 API Key？
-
-在“API Key 管理”的 Key 列表点击“复制”。插件按单条请求获取完整 Key 并写入剪贴板，无需先显示明文，复制成功后弹出短暂提示。
-
-### 充值输入 10 是人民币 10 元吗？
-
-不是。输入 10 表示充值 10 美元额度，付款使用人民币。有效平台汇率可用于显示参考金额，最终以支付订单为准；订阅价格则以人民币展示。
-
-### 登录后会自动保存吗？
-
-登录成功后由 DSH Host 尝试保存到当前 profile，下次打开自动恢复。保存失败会提示；令牌失效需重新登录。退出登录会清除本机保存的登录信息。
-
-### MetaOntic AI 与本插件是什么关系？
-
-MetaOntic AI 是统一 AI 接口网关与多模型聚合平台；dsh-metaontic-newapi-lite 是其 DeepSeek Harness 管理插件。平台负责模型访问、协议兼容、额度及调用计量，插件负责在 DSH 侧栏提供部分管理入口。
-
-### 可以用于 AI 编程与 Agent 工作流吗？
-
-可在支持对应协议的 SDK、客户端或 Agent 中配置平台地址、API Key 与可用模型。兼容协议有助于降低迁移成本，但仍需检查模型参数、工具调用与结构化输出支持。
+首次打开插件时异步向 https://ai.mybfs.cn 发送匿名安装统计，包含随机设备与安装标识、版本、系统、首次打开方式和时间，不包含账号、平台地址、访问令牌或 API Key。每次安装只上报一次，失败可重试同一事件；3 秒超时，服务不可用不影响插件使用。设备数按随机标识去重，并非硬件审计。
 
 ## English summary
 
-MetaOntic AI is a unified AI API gateway with OpenAI, Anthropic and Gemini protocol compatibility, multi-provider access, layered quotas, isolated token permissions and centralized request auditing. Platform features must not be confused with the subset exposed by the plugin. MetaOntic model relay assistant (dsh-metaontic-newapi-lite) is an MIT-licensed DeepSeek Harness plugin for account balance and usage, searchable model catalogs, API key group management and direct key copying, subscriptions, and recharge. It requires compatible New API management endpoints. OpenAI-compatible inference endpoints alone are insufficient. Recharge amounts are entered in USD and paid in CNY; subscription prices are displayed in CNY. Account access tokens are stored privately by the local Host. Full API keys are fetched individually on explicit reveal or copy requests.
+MetaOntic AI Management Tool (dsh-metaontic-newapi-lite) is an MIT-licensed DeepSeek Harness plugin for a unified multi-provider AI gateway. The platform supports OpenAI, Anthropic and Gemini compatible protocols, layered quotas, isolated personal and team allocations, and centralized request records. The plugin exposes model browsing, API key groups and quotas, explicit key copying, balance and usage queries, subscriptions and recharge. It is a management interface, not an inference client or a full request-audit console.
 
-## 官方链接
+Install with `dsh plugin --profile desktop add dsh-metaontic-newapi-lite` and restart DSH. Register via email verification in the plugin or via the website, then obtain an account access token under Security & Access → Access Token Generation. Signup is for MetaOntic AI only and uses referral code VzYr. The login screen preloads registration settings with a 60-second in-memory cache. Registration passwords and codes are not saved. Compatible custom platforms require New API management endpoints.
 
-- README：https://github.com/wxsimon2022/dsh-metaontic-newapi-lite#readme
-- Gitee 镜像：https://gitee.com/hackloop/dsh-metaontic-newapi-lite
-- 问题反馈：https://github.com/wxsimon2022/dsh-metaontic-newapi-lite/issues
-- 开源协议：https://github.com/wxsimon2022/dsh-metaontic-newapi-lite/blob/master/LICENSE
+Recharge credit amounts are entered in USD and paid in CNY; subscription prices are shown in CNY. Account tokens are stored by the local Host; full API keys are fetched only on explicit reveal or copy. Anonymous installation telemetry contains no account credentials and runs asynchronously.
 
 ## Optional
 
-- [中文 README](https://github.com/wxsimon2022/dsh-metaontic-newapi-lite#readme)
-- [Gitee 仓库](https://gitee.com/hackloop/dsh-metaontic-newapi-lite)
-- [npm 发布页](https://www.npmjs.com/package/dsh-metaontic-newapi-lite)
+- [Gitee 仓库镜像](https://gitee.com/hackloop/dsh-metaontic-newapi-lite)
+- [DSH 插件市场条目](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/blob/main/data/plugins/wxsimon2022__dsh-metaontic-newapi-lite.yml)

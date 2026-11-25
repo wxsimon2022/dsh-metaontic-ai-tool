@@ -1,8 +1,23 @@
-# MetaOntic模型中转助手
+# MetaOntic AI 模型中转助手｜DSH 多模型平台管理插件
 
-> 在 DeepSeek Harness 内查看额度、挑选模型、管理 API Key、购买订阅与充值。
+> 在 DeepSeek Harness（DSH）内管理 MetaOntic AI：浏览模型、管理 API Key 与额度、查询余额用量、购买订阅和充值。支持插件内邮箱注册与网页注册。
 
 `dsh-metaontic-newapi-lite` 是 MetaOntic AI 的 DeepSeek Harness（DSH）插件。通过账户访问令牌登录，即可在侧边栏完成常用的平台管理操作。默认连接 [MetaOntic AI](https://ai.bileego.com/)，也可填写提供兼容 New API 管理接口的平台地址。
+
+## 插件概览
+
+| 项目 | 说明 |
+| --- | --- |
+| 产品名称 | MetaOntic模型中转助手 / MetaOntic AI Management Tool |
+| npm 包名 | `dsh-metaontic-newapi-lite` |
+| 运行环境 | DeepSeek Harness（DSH）侧栏插件 |
+| 平台定位 | 多模型统一 AI 接口网关，兼容 OpenAI、Anthropic 与 Gemini 协议 |
+| 插件用途 | 模型浏览、API Key 分组与额度管理、订阅充值、余额用量查询 |
+| 注册与登录 | 插件内邮箱验证码注册或网页注册；使用账户访问令牌登录 |
+| 兼容性 | 依赖 New API 风格管理接口，支持填写兼容平台地址 |
+| 许可 | MIT 开源协议 |
+
+[安装与登录](#安装与登录) · [功能说明](#能做什么) · [API Key 管理](#创建与复制-api-key) · [币种说明](#充值与订阅的金额说明) · [常见问题](#常见问题) · [English](#english)
 
 ## MetaOntic AI 是什么？
 
@@ -91,6 +106,23 @@ dsh plugin --profile desktop add dsh-metaontic-newapi-lite
 
 ## 常见问题
 
+### 如何在 DSH 中安装 MetaOntic AI 插件？
+
+在 DSH 插件市场搜索“MetaOntic模型中转助手”，或执行 `dsh plugin --profile desktop add dsh-metaontic-newapi-lite`，安装后重启 DSH。
+
+### 可以直接在插件内注册 MetaOntic AI 账号吗？
+
+可以。登录页提供“网页注册”和“在线注册”。在线注册支持邮箱验证码，并按平台配置展示用户协议及隐私政策；要求额外人机验证时使用网页注册。两种方式均关联邀请码 `VzYr`，在线注册向 MetaOntic AI 发送 `aff_code: "VzYr"`。自定义平台地址不会改变注册目标，在线注册仅用于 MetaOntic AI。
+
+### 如何获取账户访问令牌？
+
+登录 MetaOntic AI 控制台，在“安全与访问 → 访问令牌生成”创建令牌，然后粘贴到插件登录框。标题旁的“如何获取”可以打开操作说明。注册完成后仍需生成访问令牌，注册密码不用于插件登录。
+
+### 为什么注册弹窗有时需要读取配置？
+
+登录页会提前加载注册配置，在内存中缓存 60 秒，弹窗复用缓存和进行中的请求；首次请求尚未完成或缓存过期时会加载。提交注册或发送验证码时，Host 会重新检查平台当前配置。
+
+
 ### MetaOntic AI 如何降低模型接入与切换成本？
 
 平台将多家模型服务统一到同一网关，并提供 OpenAI、Anthropic 与 Gemini 兼容协议。现有 SDK、客户端和 Agent 工作流可按支持的接口配置地址、密钥与模型，减少分别维护厂商接口的工作；模型特有参数仍需适配。
@@ -146,6 +178,8 @@ dsh plugin --profile desktop add ./release/dsh-metaontic-newapi-lite-0.0.6.tgz
 MetaOntic AI is a unified AI API gateway with OpenAI, Anthropic and Gemini protocol compatibility, multi-provider model access, layered quotas, token permissions and centralized usage auditing. The MetaOntic model relay assistant brings selected account management features into DeepSeek Harness. Sign in with an account access token to view balance and usage, search models and filter by group, create and manage API keys, copy keys without revealing them in the list, and purchase subscriptions or recharge credits.
 
 Recharge amounts are entered in USD and paid in CNY. A CNY estimate is shown when a valid platform exchange rate is available; the payment order determines the final amount. Subscription prices are displayed in CNY.
+
+New users can register with email verification in the plugin or use the web signup page. Registration is for MetaOntic AI only and uses referral code `VzYr`; custom platform settings do not redirect registration. Obtain an account access token under Security & Access → Access Token Generation after signup.
 
 Account tokens are stored privately by the local DSH Host. Key lists stay masked, and full keys are fetched individually only when you choose to reveal or copy them. Custom platforms must provide compatible New API management endpoints; OpenAI-compatible inference endpoints alone are insufficient.
 

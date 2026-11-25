@@ -44,7 +44,10 @@
     "usage-query",
     "ai-management",
     "plugin-market",
-    "gitee"
+    "gitee",
+    "email-registration",
+    "new-api-management",
+    "multi-model-management"
   ],
   "exports": {
     ".": {
